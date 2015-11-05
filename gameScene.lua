@@ -31,18 +31,18 @@ function scene:create( event )
 	background.anchorY = 0
 	background:setFillColor( .5 )
 	
-	-- make a crate (off-screen), position it, and rotate slightly
-	local crate = display.newImageRect( "helicopter.png", 90, 90 )
-	crate.x, crate.y = screenW - screenW * 0.85, screenH/2
-	crate.rotation = 0
+	-- make a helicopter (off-screen), position it, and rotate slightly
+	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
+	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
+	helicopter.rotation = 0
 	
-	-- add physics to the crate
-	physics.addBody( crate, { density=1.0, friction=0.3, bounce=0.3 } )
+	-- add physics to the helicopter
+	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
 	
 	-- holdTimer and holdTimer listener method
 	
 	local function flyHelicopter()
-	      crate:setLinearVelocity(0, -100)
+	      helicopter:setLinearVelocity(0, -100)
 		  print("IM BEING HELD!")
 	end
 	
@@ -54,17 +54,17 @@ function scene:create( event )
 			firstTouch = false
 		end
 		if event.phase == "began" then
-			crate.rotation = -7
-			display.getCurrentStage():setFocus( crate )
-	        crate.isFocus = true
+			helicopter.rotation = -7
+			display.getCurrentStage():setFocus( helicopter )
+	        helicopter.isFocus = true
 			Runtime:addEventListener( "enterFrame", flyHelicopter )
-		    elseif crate.isFocus then              
+		    elseif helicopter.isFocus then              
 		    	if event.phase == "moved" then
 		    	elseif event.phase == "ended" then
 	        	Runtime:removeEventListener( "enterFrame", flyHelicopter )
             	display.getCurrentStage():setFocus( nil )
-   			 	crate.isFocus = false
-				crate.rotation = 2
+   			 	helicopter.isFocus = false
+				helicopter.rotation = 2
 		    end
 		end
 	end
@@ -85,7 +85,7 @@ function scene:create( event )
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background )
 	sceneGroup:insert( grass)
-	sceneGroup:insert( crate )
+	sceneGroup:insert( helicopter )
 end
 
 

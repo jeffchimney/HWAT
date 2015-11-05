@@ -15,6 +15,27 @@ local widget = require "widget"
 -- forward declarations and other locals
 local playBtn
 
+-- Options to be used for each button
+local options = {
+	    label="",
+	    font = "FuturaLT",
+	    fontSize = 20,
+	    labelColor = { default={0.27}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.27} },
+    	strokeColor = { default={0.27}, over={0.27} },
+    	strokeWidth = 3,
+    	shape = "roundedRect",
+		width=154, height=40
+}
+
+local overlayOptions ={
+	isModal = false,
+	effect = "fade",
+	time = 1000,
+	height = 80,
+	width = 80
+}
+
 -- 'onRelease' event listener for playBtn
 local function onPlayBtnRelease()
 	
@@ -24,6 +45,14 @@ local function onPlayBtnRelease()
 	return true	-- indicates successful touch
 end
 
+local function onCreditRelease()
+	composer.showOverlay("gameCredits", overlayOptions)
+end
+
+
+
+
+
 function scene:create( event )
 	local sceneGroup = self.view
 
@@ -32,33 +61,66 @@ function scene:create( event )
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
-	-- display a background image
-	local background = display.newImageRect( "background.jpg", display.contentWidth, display.contentHeight )
-	background.anchorX = 0
-	background.anchorY = 0
-	background.x, background.y = 0, 0
+	-- display a background color
+	display.setDefault("background", 1, 1, 1)
 	
 	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newImageRect( "logo.png", 264, 42 )
+	local titleLogo = display.newText( "Title", 264, 42, "FuturaLT", 29 )
 	titleLogo.x = display.contentWidth * 0.5
 	titleLogo.y = 100
+	titleLogo:setFillColor(0.26)
 	
-	-- create a widget button (which will loads level1.lua on release)
-	playBtn = widget.newButton{
-		label="Play Now",
-		labelColor = { default={255}, over={128} },
-		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onPlayBtnRelease	-- event listener function
-	}
+
+	-- Play Button Settings --
+	playBtn = widget.newButton(options)
 	playBtn.x = display.contentWidth*0.5
-	playBtn.y = display.contentHeight - 125
+	playBtn.y = display.contentHeight - 140
+	playBtn:setLabel("Play")
+
+
+	-- Tutorial Button Settings --
+	tutorialBtn = widget.newButton(options)
+	tutorialBtn.x = display.contentWidth*0.5
+	tutorialBtn.y = display.contentHeight - 90
+	tutorialBtn:setLabel("How")
+
+
+	-- Credit Button Settings --
+	local creditBtn = widget.newButton{
+	defaultFile = "creditButton.png",
+	overFile = "creditOverButton.png",
+	width = 30,
+	height = 30,
+	onRelease = onCreditRelease
+
+	}
+
+	creditBtn.x = display.contentWidth * 0.05
+	creditBtn.y = display.contentHeight * 0.93
+
+
+	--Sound Button--
+	local soundBtn = widget.newButton{
+	defaultFile = "soundOn.png",
+	overFile = "soundOff.png",
+	width = 30,
+	height = 30,
+
+	}
+
+	soundBtn.x = display.contentWidth * 0.95
+	soundBtn.y = display.contentHeight * 0.93
+
+
+
+	
 	
 	-- all display objects must be inserted into group
-	sceneGroup:insert( background )
 	sceneGroup:insert( titleLogo )
 	sceneGroup:insert( playBtn )
+	sceneGroup:insert( tutorialBtn )
+	sceneGroup:insert( creditBtn )
+	sceneGroup:insert( soundBtn )
 end
 
 function scene:show( event )
