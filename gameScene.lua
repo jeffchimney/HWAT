@@ -16,6 +16,9 @@ physics.start(); physics.pause()
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
+local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
+local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
+
 function scene:create( event )
 
 	-- Called when the scene's view does not exist.
@@ -31,19 +34,17 @@ function scene:create( event )
 	background.anchorY = 0
 	background:setFillColor( .5 )
 	
-	-- make a crate (off-screen), position it, and rotate slightly
-	local crate = display.newImageRect( "helicopter.png", 90, 90 )
-	crate.x, crate.y = screenW - screenW * 0.85, screenH/2
-	crate.rotation = 0
+	-- make a helicopter (off-screen), position it, and rotate slightly
+	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
+	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
+	helicopter.rotation = 0
 	
-	-- add physics to the crate
-	physics.addBody( crate, { density=1.0, friction=0.3, bounce=0.3 } )
+	-- add physics to the helicopter
+	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
 	
-	-- holdTimer and holdTimer listener method
-	
+	-- move the helicopter while press and hold
 	local function flyHelicopter()
-	      crate:setLinearVelocity(0, -100)
-		  print("IM BEING HELD!")
+	      helicopter:setLinearVelocity(0, -100)
 	end
 	
 	local firstTouch = true
@@ -54,17 +55,17 @@ function scene:create( event )
 			firstTouch = false
 		end
 		if event.phase == "began" then
-			crate.rotation = -7
-			display.getCurrentStage():setFocus( crate )
-	        crate.isFocus = true
+			helicopter.rotation = -7
+			display.getCurrentStage():setFocus( helicopter )
+	        helicopter.isFocus = true
 			Runtime:addEventListener( "enterFrame", flyHelicopter )
-		    elseif crate.isFocus then              
+		    elseif helicopter.isFocus then              
 		    	if event.phase == "moved" then
 		    	elseif event.phase == "ended" then
 	        	Runtime:removeEventListener( "enterFrame", flyHelicopter )
             	display.getCurrentStage():setFocus( nil )
-   			 	crate.isFocus = false
-				crate.rotation = 2
+   			 	helicopter.isFocus = false
+				helicopter.rotation = 2
 		    end
 		end
 	end
@@ -72,20 +73,56 @@ function scene:create( event )
 	sceneGroup:addEventListener( "touch", myTapListener )  --add a "tap" listener to the object
 	
 	
-	-- create a grass object and add physics (with custom shape)
-	local grass = display.newImageRect( "grass.png", screenW, 82 )
-	grass.anchorX = 0
-	grass.anchorY = 1
-	grass.x, grass.y = 0, display.contentHeight+display.contentHeight/6
+	-- create a floor object and add physics (with custom shape)
+	scrollingForeground1.anchorX = 0
+	scrollingForeground1.anchorY = 1
+	scrollingForeground1.x, scrollingForeground1.y = 0, display.contentHeight+display.contentHeight/6
 	
 	-- define a shape that's slightly shorter than image bounds (set draw mode to "hybrid" or "debug" to see)
-	local grassShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
-	physics.addBody( grass, "static", { friction=0.3, shape=grassShape } )
+	local scrollingForegroundShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
+	physics.addBody( scrollingForeground1, "static", { friction=0.3, shape=scrollingForegroundShape } )
+	
+	scrollingForeground2.anchorX = 0
+	scrollingForeground2.anchorY = 1
+	scrollingForeground2.x, scrollingForeground2.y = display.contentWidth, display.contentHeight+display.contentHeight/6
+	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background )
-	sceneGroup:insert( grass)
-	sceneGroup:insert( crate )
+	sceneGroup:insert( scrollingForeground1 )
+	sceneGroup:insert( scrollingForeground2 )
+	sceneGroup:insert( helicopter )
+	
+	--  start scrolling background, will rearrange backgrounds once one is off screen
+	local runtime = 0
+
+	local function getDeltaTime()
+	    local temp = system.getTimer()  -- Get current game time in ms
+	    local dt = (temp-runtime) / (1000/60)  -- 60 fps or 30 fps as base
+	    runtime = temp  -- Store game time
+	    return dt
+	end
+	
+	-- Frame update function
+	local function frameUpdate()
+
+	   -- Delta Time value
+	   local dt = getDeltaTime()
+
+	   -- Move the foreground 1 pixel with delta compensation (makes it a bit smoother)
+	   -- We can use this to scroll the background at a slower pace than the foreground
+	   -- it'll look neat.
+	   scrollingForeground1:translate( -1*dt, 0 )
+	   scrollingForeground2:translate( -1*dt, 0 )
+	   
+	   if scrollingForeground1.x <= -display.contentWidth then
+		   scrollingForeground1.x = 0
+		   scrollingForeground2.x = display.contentWidth
+	   end
+	end
+	
+	-- Frame update listener
+	Runtime:addEventListener( "enterFrame", frameUpdate )
 end
 
 
