@@ -29,10 +29,10 @@ function scene:create( event )
 	local sceneGroup = self.view
 
 	-- create a grey rectangle as the backdrop
-	local background = display.newRect( 0, 0, screenW, screenH )
+	local background = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background.anchorX = 0
 	background.anchorY = 0
-	background:setFillColor( .5 )
+	--background:setFillColor( .5 )
 	
 	-- make a helicopter (off-screen), position it, and rotate slightly
 	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
@@ -114,6 +114,7 @@ function scene:create( event )
 	   -- it'll look neat.
 	   scrollingForeground1:translate( -1*dt, 0 )
 	   scrollingForeground2:translate( -1*dt, 0 )
+	   background:translate( -0.25*dt, 0 )
 	   
 	   if scrollingForeground1.x <= -display.contentWidth then
 		   scrollingForeground1.x = 0
