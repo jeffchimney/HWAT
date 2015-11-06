@@ -89,6 +89,7 @@ function scene:create( event )
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background )
+	sceneGroup:insert( grass)
 	sceneGroup:insert( scrollingForeground1 )
 	sceneGroup:insert( scrollingForeground2 )
 	sceneGroup:insert( helicopter )
