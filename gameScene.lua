@@ -29,9 +29,13 @@ function scene:create( event )
 	local sceneGroup = self.view
 
 	-- create a grey rectangle as the backdrop
-	local background = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
-	background.anchorX = 0
-	background.anchorY = 0
+	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
+	background1.anchorY = 0
+	background1.x, background1.y = 0, 0
+	
+	local background2 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
+	background2.anchorY = 0
+	background2.x, background2.y = screenW*2, 0
 	--background:setFillColor( .5 )
 	
 	-- make a helicopter (off-screen), position it, and rotate slightly
@@ -88,7 +92,8 @@ function scene:create( event )
 	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	
 	-- all display objects must be inserted into group
-	sceneGroup:insert( background )
+	sceneGroup:insert( background1 )
+	sceneGroup:insert( background2 )
 	sceneGroup:insert( scrollingForeground1 )
 	sceneGroup:insert( scrollingForeground2 )
 	sceneGroup:insert( helicopter )
@@ -114,11 +119,17 @@ function scene:create( event )
 	   -- it'll look neat.
 	   scrollingForeground1:translate( -1*dt, 0 )
 	   scrollingForeground2:translate( -1*dt, 0 )
-	   background:translate( -0.25*dt, 0 )
+	   background1:translate( -1.25*dt, 0 )
+	   background2:translate( -1.25*dt, 0 )
 	   
 	   if scrollingForeground1.x <= -display.contentWidth then
 		   scrollingForeground1.x = 0
 		   scrollingForeground2.x = display.contentWidth
+	   end
+	   
+	   if background1.x <= -display.contentWidth*2 then
+		   background1.x = 0
+		   background2.x = display.contentWidth*2
 	   end
 	end
 	
