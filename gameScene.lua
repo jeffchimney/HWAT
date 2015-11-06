@@ -119,8 +119,8 @@ function scene:create( event )
 	   -- it'll look neat.
 	   scrollingForeground1:translate( -1*dt, 0 )
 	   scrollingForeground2:translate( -1*dt, 0 )
-	   background1:translate( -1.25*dt, 0 )
-	   background2:translate( -1.25*dt, 0 )
+	   background1:translate( -0.25*dt, 0 )
+	   background2:translate( -0.25*dt, 0 )
 	   
 	   if scrollingForeground1.x <= -display.contentWidth then
 		   scrollingForeground1.x = 0
