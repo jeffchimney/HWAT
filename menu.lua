@@ -72,7 +72,18 @@ function scene:create( event )
 	
 
 	-- Play Button Settings --
-	playBtn = widget.newButton(options)
+	playBtn = widget.newButton{
+	    label="",
+	    font = "FuturaLT",
+	    fontSize = 20,
+	    labelColor = { default={0.27}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.27} },
+    	strokeColor = { default={0.27}, over={0.27} },
+    	strokeWidth = 3,
+    	shape = "roundedRect",
+		width=154, height=40,
+		onRelease = onPlayBtnRelease
+	}
 	playBtn.x = display.contentWidth*0.5
 	playBtn.y = display.contentHeight - 140
 	playBtn:setLabel("Play")
