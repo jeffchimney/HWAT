@@ -11,65 +11,44 @@ local scene = composer.newScene()
 -- include Corona's "widget" library
 local widget = require "widget"
 
--- Local Variables
-local centerX = display.contentCenterX -- grab center of X values
-local centerY = display.contentCenterY -- grab center of Y values
-local width = display.contentWidth -- scale the x-size of the shown overlay
-local height = display.contentHeight  -- scale the y-size of the shown overlay
+-- Local Variables to make for easier access of dimensions
+local centerX = display.contentCenterX 
+local centerY = display.contentCenterY
+local width = display.contentWidth 
+local height = display.contentHeight  
 
-local overlayOptions ={
-	isModal = false,
-	effect = "fade",
-	time = 1000,
-	height = 80,
-	width = 80
-}
 
-local function btnTap(event)
-	event.target.xScale = 0.95
-	event.target.yScale = 0.95
-	composer.gotoScene(event.target.destination, overlayOptions)
-	return true
-end
-
-local function hideOverlay(event)
-	composer.hideOverlay("fade", 800)
+local function onHomeRelease(event)
+	composer.gotoScene(event.target.destination, "fade", 500)
 end 
-
-function catchBackgroundOverlay(event)
-	return true
-end
 
 
 function scene:create( event )
 	local sceneGroup = self.view
-	local Overlay = display.newRect(sceneGroup, centerX, centerY, width, height, 12 )
-	Overlay:setFillColor(0.9)
-	Overlay.alpha = 0.9
-	Overlay.isHitTestable = true
-	Overlay:addEventListener("tap", catchBackgroundOverlay)
-	Overlay:addEventListener("touch", catchBackgroundOverlay)
+	local background = display.newRect(sceneGroup, centerX, centerY, width, height, 12 )
+	background:setFillColor(1)
+	
+	-- Credit Button Settings --
+	homeBtn = widget.newButton{
+	label = "home",
+	labelColor = { default={0.27}, over={1} },
+	font = "FuturaLT"
 
-	-- Create the button used to minimize the overlay on click
-	local minimizeBtn = widget.newButton {
-			label = "hide",
-			labelColor = { default={0.27}, over={1} },
-			font = "FuturaLT",
-			color = black,
-			height = 30,
-			width = 30,
 	}
-	minimizeBtn.x = width * 0.08
-	minimizeBtn.y = height * 0.08
-	minimizeBtn:addEventListener ("tap", hideOverlay)
-	sceneGroup:insert(minimizeBtn)
+	homeBtn.destination = "menu"
+	homeBtn:addEventListener("tap", onHomeRelease)
+	homeBtn.x = display.contentWidth * 0.07
+	homeBtn.y = display.contentHeight * 0.93
+	sceneGroup:insert(homeBtn)
+
+
 	-- Called when the scene's view does not exist.
 	-- 
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newText( "A GAME CREATED BY JEFF & DAYNA", 264, 42, "FuturaLT", 20 )
+	local titleLogo = display.newText( "TUTORIAL...", 264, 42, "FuturaLT", 20 )
 	titleLogo.x = display.contentWidth * 0.5
 	titleLogo.y = 145
 	titleLogo:setFillColor(0.27)

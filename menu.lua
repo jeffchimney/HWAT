@@ -45,9 +45,15 @@ local function onPlayBtnRelease()
 	return true	-- indicates successful touch
 end
 
-local function onCreditRelease()
-	composer.showOverlay("gameCredits", overlayOptions)
+local function onTutorialRelease()
+	composer.gotoScene("Tutorial", "fade", 500)
 end
+
+local function onCreditRelease(event)
+	composer.showOverlay("gameCredits", overlayOptions)
+	return true
+end
+
 
 
 
@@ -94,17 +100,18 @@ function scene:create( event )
 	tutorialBtn.x = display.contentWidth*0.5
 	tutorialBtn.y = display.contentHeight - 90
 	tutorialBtn:setLabel("How")
+	tutorialBtn:addEventListener("tap", onTutorialRelease)
 
 
 	-- Credit Button Settings --
-	local creditBtn = widget.newButton{
+	creditBtn = widget.newButton{
 	defaultFile = "creditButton.png",
-	overFile = "creditOverButton.png",
 	width = 30,
 	height = 30,
-	onRelease = onCreditRelease
 
 	}
+	creditBtn.destination = "gameCredits"
+	creditBtn:addEventListener("tap", onCreditRelease)
 
 	creditBtn.x = display.contentWidth * 0.05
 	creditBtn.y = display.contentHeight * 0.93
