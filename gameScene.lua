@@ -16,9 +16,6 @@ physics.start(); physics.pause()
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
-local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
-local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
-
 function scene:create( event )
 
 	-- Called when the scene's view does not exist.
@@ -29,14 +26,10 @@ function scene:create( event )
 	local sceneGroup = self.view
 
 	-- create a grey rectangle as the backdrop
-	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
-	background1.anchorY = 0
-	background1.x, background1.y = 0, 0
-	
-	local background2 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
-	background2.anchorY = 0
-	background2.x, background2.y = screenW*2, 0
-	--background:setFillColor( .5 )
+	local background = display.newRect( 0, 0, screenW, screenH )
+	background.anchorX = 0
+	background.anchorY = 0
+	background:setFillColor( .5 )
 	
 	-- make a helicopter (off-screen), position it, and rotate slightly
 	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
@@ -46,9 +39,11 @@ function scene:create( event )
 	-- add physics to the helicopter
 	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
 	
-	-- move the helicopter while press and hold
+	-- holdTimer and holdTimer listener method
+	
 	local function flyHelicopter()
 	      helicopter:setLinearVelocity(0, -100)
+		  print("IM BEING HELD!")
 	end
 	
 	local firstTouch = true
@@ -77,64 +72,20 @@ function scene:create( event )
 	sceneGroup:addEventListener( "touch", myTapListener )  --add a "tap" listener to the object
 	
 	
-	-- create a floor object and add physics (with custom shape)
-	scrollingForeground1.anchorX = 0
-	scrollingForeground1.anchorY = 1
-	scrollingForeground1.x, scrollingForeground1.y = 0, display.contentHeight+display.contentHeight/6
+	-- create a grass object and add physics (with custom shape)
+	local grass = display.newImageRect( "grass.png", screenW, 82 )
+	grass.anchorX = 0
+	grass.anchorY = 1
+	grass.x, grass.y = 0, display.contentHeight+display.contentHeight/6
 	
 	-- define a shape that's slightly shorter than image bounds (set draw mode to "hybrid" or "debug" to see)
-	local scrollingForegroundShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
-	physics.addBody( scrollingForeground1, "static", { friction=0.3, shape=scrollingForegroundShape } )
-	
-	scrollingForeground2.anchorX = 0
-	scrollingForeground2.anchorY = 1
-	scrollingForeground2.x, scrollingForeground2.y = display.contentWidth, display.contentHeight+display.contentHeight/6
-	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
+	local grassShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
+	physics.addBody( grass, "static", { friction=0.3, shape=grassShape } )
 	
 	-- all display objects must be inserted into group
-	sceneGroup:insert( background1 )
-	sceneGroup:insert( background2 )
-	sceneGroup:insert( scrollingForeground1 )
-	sceneGroup:insert( scrollingForeground2 )
+	sceneGroup:insert( background )
+	sceneGroup:insert( grass)
 	sceneGroup:insert( helicopter )
-	
-	--  start scrolling background, will rearrange backgrounds once one is off screen
-	local runtime = 0
-
-	local function getDeltaTime()
-	    local temp = system.getTimer()  -- Get current game time in ms
-	    local dt = (temp-runtime) / (1000/60)  -- 60 fps or 30 fps as base
-	    runtime = temp  -- Store game time
-	    return dt
-	end
-	
-	-- Frame update function
-	local function frameUpdate()
-
-	   -- Delta Time value
-	   local dt = getDeltaTime()
-
-	   -- Move the foreground 1 pixel with delta compensation (makes it a bit smoother)
-	   -- We can use this to scroll the background at a slower pace than the foreground
-	   -- it'll look neat.
-	   scrollingForeground1:translate( -1*dt, 0 )
-	   scrollingForeground2:translate( -1*dt, 0 )
-	   background1:translate( -0.25*dt, 0 )
-	   background2:translate( -0.25*dt, 0 )
-	   
-	   if scrollingForeground1.x <= -display.contentWidth then
-		   scrollingForeground1.x = 0
-		   scrollingForeground2.x = display.contentWidth
-	   end
-	   
-	   if background1.x <= -display.contentWidth*2 then
-		   background1.x = 0
-		   background2.x = display.contentWidth*2
-	   end
-	end
-	
-	-- Frame update listener
-	Runtime:addEventListener( "enterFrame", frameUpdate )
 end
 
 
