@@ -11,12 +11,9 @@ local scene = composer.newScene()
 local widget = require "widget"
 
 --------------------------------------------
-local creditBtn
-local centerX = display.contentCenterX -- grab center of X values
-local centerY = display.contentCenterY -- grab center of Y values
-local width = display.contentWidth -- store the x-size of the shown overlay
-local height = display.contentHeight -- store the y-size of the shown overlay
+
 -- forward declarations and other locals
+local playBtn
 
 -- Options to be used for each button
 local options = {
@@ -48,17 +45,15 @@ local function onPlayBtnRelease()
 	return true	-- indicates successful touch
 end
 
-
-local function onCreditRelease()
-	
-	Overlay.alpha = 0.8
-	creditBtn:addEventListener("touch", resumeMenu)
+local function onTutorialRelease()
+	composer.gotoScene("Tutorial", "fade", 500)
 end
 
-local function resumeMenu()
-	creditBtn:removeEventListener("touch", onCreditRelease)
-	Overlay.alpha = 0
+local function onCreditRelease(event)
+	composer.showOverlay("gameCredits", overlayOptions)
+	return true
 end
+
 
 
 
@@ -83,10 +78,20 @@ function scene:create( event )
 	
 
 	-- Play Button Settings --
-	local playBtn = widget.newButton(options)
+	playBtn = widget.newButton{
+	    label="",
+	    font = "FuturaLT",
+	    fontSize = 20,
+	    labelColor = { default={0.27}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.27} },
+    	strokeColor = { default={0.27}, over={0.27} },
+    	strokeWidth = 3,
+    	shape = "roundedRect",
+		width=154, height=40,
+		onRelease = onPlayBtnRelease
+	}
 	playBtn.x = display.contentWidth*0.5
 	playBtn.y = display.contentHeight - 140
-	playBtn:addEventListener("touch", onPlayBtnRelease)
 	playBtn:setLabel("Play")
 
 
@@ -95,17 +100,18 @@ function scene:create( event )
 	tutorialBtn.x = display.contentWidth*0.5
 	tutorialBtn.y = display.contentHeight - 90
 	tutorialBtn:setLabel("How")
+	tutorialBtn:addEventListener("tap", onTutorialRelease)
 
 
 	-- Credit Button Settings --
 	creditBtn = widget.newButton{
 	defaultFile = "creditButton.png",
-	overFile = "creditOverButton.png",
 	width = 30,
 	height = 30,
-	onRelease = onCreditRelease
 
 	}
+	creditBtn.destination = "gameCredits"
+	creditBtn:addEventListener("tap", onCreditRelease)
 
 	creditBtn.x = display.contentWidth * 0.05
 	creditBtn.y = display.contentHeight * 0.93
@@ -123,10 +129,8 @@ function scene:create( event )
 	soundBtn.x = display.contentWidth * 0.95
 	soundBtn.y = display.contentHeight * 0.93
 
-	-- Overlay Settings on Hide --
-	Overlay = display.newRect( centerX, centerY, width, height)
-	Overlay:setFillColor(0.9)
-	Overlay.alpha = 0	
+
+
 	
 	
 	-- all display objects must be inserted into group
