@@ -28,20 +28,43 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 
+	-- Assign a "type" to foreground for collision detection with helicopter
+	
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background1.anchorY = 0
 	background1.x, background1.y = 0, 0
-	
+
 	local background2 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background2.anchorY = 0
 	background2.x, background2.y = screenW*2, 0
+
 	--background:setFillColor( .5 )
 	
+-- Function to detect collision (helicopter, event such as foreground collision)
+	local function helicopterCollision(self, event)
+		-- want to know when the collision starts:
+		if event.phase == "began" then
+			print("i am colliding") 
+			composer.gotoScene("gameOver")
+			--Change functions of this later once we have added in score variables and such:
+			--Include game over message/scoreboard
+			--Stop incrementing score
+			--define types of different collision, ex: with coins, questions
+			--Change appearance of helicopter maybe on !!FIRE!! or spinning out of control or dropping off screen
+		end
+	end
+
+	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
 	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
+	
+	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
+	helicopter.collision = helicopterCollision
+	helicopter:addEventListener("collision", helicopter)
+
 	
 	-- add physics to the helicopter
 	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
@@ -81,16 +104,16 @@ function scene:create( event )
 	scrollingForeground1.anchorX = 0
 	scrollingForeground1.anchorY = 1
 	scrollingForeground1.x, scrollingForeground1.y = 0, display.contentHeight+display.contentHeight/6
-	
 	-- define a shape that's slightly shorter than image bounds (set draw mode to "hybrid" or "debug" to see)
 	local scrollingForegroundShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
 	physics.addBody( scrollingForeground1, "static", { friction=0.3, shape=scrollingForegroundShape } )
-	
+
 	scrollingForeground2.anchorX = 0
 	scrollingForeground2.anchorY = 1
 	scrollingForeground2.x, scrollingForeground2.y = display.contentWidth, display.contentHeight+display.contentHeight/6
 	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	
+
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background1 )
 	sceneGroup:insert( background2 )
@@ -158,7 +181,7 @@ function scene:hide( event )
 	
 	local phase = event.phase
 	
-	if event.phase == "will" then
+	if event.phase == "will" then		
 		-- Called when the scene is on screen and is about to move off screen
 		--
 		-- INSERT code here to pause the scene
@@ -177,7 +200,14 @@ function scene:destroy( event )
 	-- INSERT code here to cleanup the scene
 	-- e.g. remove display objects, remove touch listeners, save state, etc.
 	local sceneGroup = self.view
-	
+
+	-- THIS NEEDS WORK ------------------------------------------------------------------
+	-- On re-entering the scene if a player chooses to play again, the helicopter should
+	-- start at the original position upon first playing the game + restarted score etc
+	-------------------------------------------------------------------------------------
+	scene:removeEventListener("touch", myTapListener)
+	scene:removeEventListener("enterFrame", frameUpdate)
+	helicopter:removeEventListener("collision", helicopter) 
 	package.loaded[physics] = nil
 	physics = nil
 end
@@ -189,7 +219,6 @@ scene:addEventListener( "create", scene )
 scene:addEventListener( "show", scene )
 scene:addEventListener( "hide", scene )
 scene:addEventListener( "destroy", scene )
-
 -----------------------------------------------------------------------------------------
 
 return scene
