@@ -15,6 +15,8 @@ physics.start(); physics.pause()
 
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
+local drKripp
+local helicopter
 
 local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
@@ -27,8 +29,6 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	local sceneGroup = self.view
-
-	-- Assign a "type" to foreground for collision detection with helicopter
 	
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
@@ -38,6 +38,8 @@ function scene:create( event )
 	local background2 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background2.anchorY = 0
 	background2.x, background2.y = screenW*2, 0
+	
+	drKripp = display.newImage("kripplol.png")
 
 	--background:setFillColor( .5 )
 	
@@ -55,9 +57,26 @@ function scene:create( event )
 		end
 	end
 
+	-- Function to set set up Dr.Kripp
+	function setupKripp()
+		local xPos = display.contentWidth * 0.80
+		physics.addBody(drKripp, "dynamic")
+		drKripp.gravityScale = 0
+		drKripp.isSensor = true
+		drKripp.x = xPos
+		drKripp.y = screenH/2
+		drKripp.width = 80
+		drKripp.height = 80
+		sceneGroup:insert(drKripp)
+	end
+
+
+
+	
+
 	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
-	local helicopter = display.newImageRect( "helicopter.png", 90, 90 )
+	helicopter = display.newImageRect( "helicopter.png", 90, 90 )
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
 	
@@ -130,12 +149,15 @@ function scene:create( event )
 	    runtime = temp  -- Store game time
 	    return dt
 	end
+
 	
 	-- Frame update function
 	local function frameUpdate()
+		
 
 	   -- Delta Time value
 	   local dt = getDeltaTime()
+	   -- This needs work.. change position to alter up and down
 
 	   -- Move the foreground 1 pixel with delta compensation (makes it a bit smoother)
 	   -- We can use this to scroll the background at a slower pace than the foreground
@@ -155,7 +177,6 @@ function scene:create( event )
 		   background2.x = display.contentWidth*2
 	   end
 	end
-	
 	-- Frame update listener
 	Runtime:addEventListener( "enterFrame", frameUpdate )
 end
@@ -165,9 +186,26 @@ function scene:show( event )
 	local sceneGroup = self.view
 	local phase = event.phase
 	
+	firstTouch = true
+	local function handleKrippMovement()
+		if drKripp.y <= 100 then
+			drKripp:setLinearVelocity(0, 100)
+		elseif drKripp.y >= screenH - screenH/6 then
+			drKripp:setLinearVelocity(0, -100)
+		elseif firstTouch then
+			drKripp:setLinearVelocity(0, -100)
+			firstTouch = false
+		end
+		print(drKripp.y)
+	end
+	
 	if phase == "will" then
+		setupKripp()
+		Runtime:addEventListener( "enterFrame", handleKrippMovement )
+		
 		-- Called when the scene is still off screen and is about to move on screen
 	elseif phase == "did" then
+
 		-- Called when the scene is now on screen
 		-- 
 		-- INSERT code here to make the scene come alive

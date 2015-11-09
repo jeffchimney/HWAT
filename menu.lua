@@ -1,3 +1,4 @@
+
 -----------------------------------------------------------------------------------------
 --
 -- menu.lua
@@ -45,6 +46,20 @@ local function onPlayBtnRelease()
 	return true	-- indicates successful touch
 end
 
+--<<<<<<< Local Changes
+--<<<<<<< Local Changes
+--local function onCreditRelease()
+--	composer.showOverlay("gameCredits", overlayOptions)
+--=======
+--local function onTutorialRelease()
+--	composer.gotoScene("Tutorial", "fade", 500)
+--end
+
+--local function onCreditRelease(event)
+--	composer.showOverlay("gameCredits", overlayOptions)
+--	return true
+-->>>>>>> External Changes
+--=======
 local function onTutorialRelease()
 	composer.gotoScene("Tutorial", "fade", 500)
 end
