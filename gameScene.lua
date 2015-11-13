@@ -17,6 +17,8 @@ physics.start(); physics.pause()
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 local drKripp
 local helicopter
+local questionCrates
+local physicsIsPaused
 
 local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
@@ -29,6 +31,10 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	local sceneGroup = self.view
+	
+	--initialize questionCrates
+	questionCrates = {}
+	physicsIsPaused = false
 	
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
@@ -47,8 +53,16 @@ function scene:create( event )
 	local function helicopterCollision(self, event)
 		-- want to know when the collision starts:
 		if event.phase == "began" then
-			print("i am colliding") 
-			composer.gotoScene("gameOver")
+			if event.other.name == "crate" then
+				print("Collided with crate")
+				-- pull up question screen
+				physics.pause()
+				physicsIsPaused = true
+				showQuestion()
+			else 
+				print("i am colliding") 
+				composer.gotoScene("gameOver")
+			end
 			--Change functions of this later once we have added in score variables and such:
 			--Include game over message/scoreboard
 			--Stop incrementing score
@@ -69,21 +83,41 @@ function scene:create( event )
 		drKripp.height = 80
 		sceneGroup:insert(drKripp)
 	end
-
-
-
 	
+	function spawnQuestionCrate()
+		local newCrate = display.newImageRect( "crate.png", 10, 10 )
+		newCrate.name = "crate"
+	
+		if drKripp.y >= screenH/2 then
+			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y - screenH/3
+		else
+			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y + screenH/3
+		end
+	
+		-- set up crate collision listeners to pass into helicopterCollision(self,event)
+		--newCrate.collision = helicopterCollision
+		--newCrate:addEventListener("collision", newCrate)
+
+		-- add physics to the helicopter
+		physics.addBody( newCrate, { density=1.0, friction=0.3, bounce=0.3 } )
+		newCrate.gravityScale = 0
+	
+		table.insert( questionCrates, newCrate )
+		
+		sceneGroup:insert(newCrate)
+	end
+	spawnQuestionCrate()
 
 	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
 	helicopter = display.newImageRect( "helicopter.png", 90, 90 )
+	helicopter.name = "helicopter"
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
 	
 	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
 	helicopter.collision = helicopterCollision
 	helicopter:addEventListener("collision", helicopter)
-
 	
 	-- add physics to the helicopter
 	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
@@ -101,6 +135,12 @@ function scene:create( event )
 			firstTouch = false
 		end
 		if event.phase == "began" then
+			-- resume physics after transition from question
+			if physicsIsPaused then
+				physics.start()
+				physicsIsPaused = false
+			end
+			
 			helicopter.rotation = -7
 			display.getCurrentStage():setFocus( helicopter )
 	        helicopter.isFocus = true
@@ -149,7 +189,6 @@ function scene:create( event )
 	    runtime = temp  -- Store game time
 	    return dt
 	end
-
 	
 	-- Frame update function
 	local function frameUpdate()
@@ -176,9 +215,29 @@ function scene:create( event )
 		   background1.x = 0
 		   background2.x = display.contentWidth*2
 	   end
+	   
+	   -- if any crates have been spawned scroll them too.
+	   if next(questionCrates) ~= nil then
+		   for _, item in ipairs(questionCrates) do
+			   item:translate( -1*dt, 0 )
+		   end
+	   end
 	end
 	-- Frame update listener
 	Runtime:addEventListener( "enterFrame", frameUpdate )
+end
+
+local overlayOptions ={
+	isModal = false,
+	effect = "fade",
+	time = 1000,
+	height = 80,
+	width = 80
+}
+
+function showQuestion()
+	composer.showOverlay("questionOverlay", overlayOptions)
+	return true
 end
 
 
@@ -188,9 +247,9 @@ function scene:show( event )
 	
 	firstTouch = true
 	local function handleKrippMovement()
-		if drKripp.y <= 100 then
+		if drKripp.y <= 50 then
 			drKripp:setLinearVelocity(0, 100)
-		elseif drKripp.y >= screenH - screenH/6 then
+		elseif drKripp.y >= screenH - screenH/5 then
 			drKripp:setLinearVelocity(0, -100)
 		elseif firstTouch then
 			drKripp:setLinearVelocity(0, -100)
@@ -201,6 +260,7 @@ function scene:show( event )
 	
 	if phase == "will" then
 		setupKripp()
+		spawnQuestionCrate()
 		Runtime:addEventListener( "enterFrame", handleKrippMovement )
 		
 		-- Called when the scene is still off screen and is about to move on screen
