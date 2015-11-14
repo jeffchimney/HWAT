@@ -19,6 +19,7 @@ local drKripp
 local helicopter
 local questionCrates
 local physicsIsPaused
+local 
 
 local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )

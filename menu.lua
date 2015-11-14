@@ -147,9 +147,6 @@ function scene:create( event )
 	soundBtn.x = display.contentWidth * 0.95
 	soundBtn.y = display.contentHeight * 0.93
 
-
-
-	
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( titleLogo )

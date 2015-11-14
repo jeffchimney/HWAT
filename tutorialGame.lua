@@ -14,9 +14,11 @@ local centerY = display.contentCenterY
 local width = display.contentWidth 
 local height = display.contentHeight 
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
-local physicsPaused
+_G.physicsTutorialPaused = false
 local helicopter
-local gamePaused = false -- used to show whether or not the entire game is paused
+-- use this to determine whether or not the game has started
+_G.tutorialHasStarted = false;
+_G.tutorialPaused = false -- used to show whether or not the entire game is paused
 local crateShowing
 local questionCrates -- table to store the crates into
 local spriteSheetOptions = {
@@ -24,20 +26,27 @@ local spriteSheetOptions = {
 	height = 100,
 	numFrames = 10
 }
+-- Options used for the tutorial question overlay
+overlayOptions ={
+	isModal = false,
+	effect = "fade",
+	time = 1000,
+	height = 80,
+	width = 80
+}
 
--- use this to determine whether or not the game has started
-local gameHasStarted = false;
+local newCrate
 
 
 local function onHomeRelease(event)
 	composer.gotoScene(event.target.destination, "fade", 500)
 end 
 
-
+--------------------------------Begin main scene create ---------------------------------------------------
 function scene:create( event )
 	local sceneGroup = self.view
 
-	physicsPaused = false -- pause the physics when initially starting the game
+	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
@@ -65,10 +74,6 @@ function scene:create( event )
 	helicopter.name = "helicopter"
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
-	
-	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
-	--helicopter.collision = helicopterCollision
-	--helicopter:addEventListener("collision", helicopter)
 	
 	-- add physics to the helicopter
 	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
@@ -118,8 +123,30 @@ function scene:create( event )
 		return spinningCoin
 	end
 
+	-- function used to detect if anything is colliding with the helicopter
 	local function helicopterCollision(self, event)
-		print('hello')
+		if event.phase == "began" then
+			if event.other.name == "crate" then
+				newCrate.alpha = 0 -- hide the crate on collision
+				tutorialPaused = true
+				firstTouch = true
+				physics.pause()
+				tutorialHasStarted = false
+				physicsTutorialPaused = true
+				showQuestion()
+			else
+				print("im not a crate!! mwah ah ha ha!!")
+			end
+		end
+	end
+
+	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
+	helicopter.collision = helicopterCollision
+	helicopter:addEventListener("collision", helicopter)
+
+	function showQuestion()
+		composer.showOverlay("tutorialQuestion", overlayOptions)
+		return true
 	end
 
 	local runtime = 0
@@ -129,21 +156,7 @@ function scene:create( event )
 		runtime = temp
 		return dt
 	end
-	
 
-	-- function will be used to pause all of the physics in the game to explain game aspects
-	local function pauseGame()
-		gamePaused = true
-		helicopter:setLinearVelocity(0, 0)
-		physicsIsPaused = true
-		physics.pause()
-		local onPauseText = display.newText( "By golly, look ahead - a wild crate appears!\n Collide with, and answer questions to gain a boost.\n Give it a shot!", 264, 42, "FuturaLT", 15 )
-		onPauseText.x = display.contentWidth * 0.65
-		onPauseText.y = 150
-		onPauseText:setFillColor(0.26)
-		sceneGroup:insert(onPauseText)
-		timer.performWithDelay(3000, resumeGame, 1)
-	end
 
 
 
@@ -152,7 +165,7 @@ function scene:create( event )
 		obj.alpha = 0
 	end
 
-	local function showCrates()
+	function showCrates()
 		-- Show some text before displaying a crate
 		local text = display.newText( "You're a real natural!", 264, 42, "FuturaLT", 15 )
 		text.x = display.contentWidth * 0.7
@@ -162,7 +175,7 @@ function scene:create( event )
 		transition.fadeOut(text, {time=2500})
 
 		crateShowing = true -- boolean to determine whether a crate is showing or not
-		local newCrate = display.newImageRect( "crate.png", 20, 20 )
+		newCrate = display.newImageRect( "crate.png", 20, 20 )
 		newCrate.name = "crate"
 		newCrate.x = display.contentWidth
 		newCrate.y = display.contentCenterY * 0.5
@@ -210,7 +223,7 @@ function scene:create( event )
 	function platformScroll()
 		local dt = getDeltaTime()
 
-		if (gameHasStarted and gamePaused == false) then
+		if (tutorialHasStarted and tutorialPaused == false) then
 			scrollingForeground1:translate( -1*dt, 0 )
 			scrollingForeground2:translate( -1*dt, 0 )
 			background1:translate( -0.25*dt, 0 )
@@ -249,23 +262,23 @@ function scene:create( event )
 	local firstTouch = true
 	local function isFlying( event )
 		-- start physics on first touch
-		if firstTouch and gamePaused == false then
+		if firstTouch and tutorialPaused == false then
 			createCoins()
 			physics.start()
 			timer.performWithDelay(5000, warnBoundaries, 1)
 			firstTouch = false
 			transition.fadeOut(instructions, {time=800})
-			gameHasStarted = true
-		elseif gamePaused == true then
+			tutorialHasStarted = true
+		elseif tutorialPaused == true then
 			physics.pause()
 			helicopter:setLinearVelocity(0, 0)
-			gameHasStarted = false
+			tutorialHasStarted = false
 		end 
 		if event.phase == "began" then
 			-- resume physics after transition from question
 			if physicsIsPaused then
 				physics.start()
-				physicsPaused = false
+				physicsTutorialPaused = false
 			end
 			
 			helicopter.rotation = -7
@@ -292,6 +305,34 @@ function scene:show( event )
 	local sceneGroup = self.view
 	local phase = event.phase
 	composer.removeScene("menu")
+
+	if phase == "will" then
+
+	elseif phase == "did" then
+		-- function used to resume the game
+	function resumeGame()
+		tutorialPaused = false
+		physicsTutorialPaused = false
+		tutorialHasStarted = true
+		physics.start()
+	end
+
+	-- function will be used to pause all of the physics in the game to explain game aspects
+	function pauseGame()
+		tutorialPaused = true
+		firstTouch = true
+		physics.pause()
+		tutorialHasStarted = false
+		physicsTutorialPaused = true
+		local onPauseText = display.newText( "By golly, look ahead - a wild crate appears!\n Collide with, and answer questions to gain a boost.\n Give it a shot!", 264, 42, "FuturaLT", 15 )
+		onPauseText.x = display.contentWidth * 0.65
+		onPauseText.y = 150
+		onPauseText:setFillColor(0.26)
+		sceneGroup:insert(onPauseText)
+		transition.fadeOut(onPauseText, {time = 3500})
+		timer.performWithDelay(4000, resumeGame, 1)
+	end
+	end 
 end
 
 
