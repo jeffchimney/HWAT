@@ -16,6 +16,9 @@ local height = display.contentHeight
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 local physicsPaused
 local helicopter
+local gamePaused = false -- used to show whether or not the entire game is paused
+local crateShowing
+local questionCrates -- table to store the crates into
 local spriteSheetOptions = {
 	width = 100,
 	height = 100,
@@ -35,7 +38,7 @@ function scene:create( event )
 	local sceneGroup = self.view
 
 	physicsPaused = false -- pause the physics when initially starting the game
-	
+	questionCrates = {} -- initialize the question crate table
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background1.anchorY = 0
@@ -126,13 +129,53 @@ function scene:create( event )
 		runtime = temp
 		return dt
 	end
+	
+
+	-- function will be used to pause all of the physics in the game to explain game aspects
+	local function pauseGame()
+		gamePaused = true
+		helicopter:setLinearVelocity(0, 0)
+		physicsIsPaused = true
+		physics.pause()
+		local onPauseText = display.newText( "By golly, look ahead - a wild crate appears!\n Collide with, and answer questions to gain a boost.\n Give it a shot!", 264, 42, "FuturaLT", 15 )
+		onPauseText.x = display.contentWidth * 0.65
+		onPauseText.y = 150
+		onPauseText:setFillColor(0.26)
+		sceneGroup:insert(onPauseText)
+		timer.performWithDelay(3000, resumeGame, 1)
+	end
+
 
 
 	-- function used to set the transparency of an object
 	local alpha = function(obj)
 		obj.alpha = 0
 	end
-	
+
+	local function showCrates()
+		-- Show some text before displaying a crate
+		local text = display.newText( "You're a real natural!", 264, 42, "FuturaLT", 15 )
+		text.x = display.contentWidth * 0.7
+		text.y = 150
+		text:setFillColor(0.26)
+		sceneGroup:insert(text)
+		transition.fadeOut(text, {time=2500})
+
+		crateShowing = true -- boolean to determine whether a crate is showing or not
+		local newCrate = display.newImageRect( "crate.png", 20, 20 )
+		newCrate.name = "crate"
+		newCrate.x = display.contentWidth
+		newCrate.y = display.contentCenterY * 0.5
+		-- add physics to the crate
+		physics.addBody( newCrate, { density=1.0, friction=0.3, bounce=0.3 } )
+		newCrate.gravityScale = 0
+		sceneGroup:insert(newCrate)
+		-- store the crate into a table to be used later
+		table.insert( questionCrates, newCrate )
+		-- after 3 seconds have passed, pause the game and explain to user what the crate is
+		timer.performWithDelay(3000, pauseGame, 1)
+	end 
+
 	
 	-- function called to warn user of boundaries
 	local function warnBoundaries()
@@ -155,7 +198,11 @@ function scene:create( event )
 		timer.performWithDelay(transition.to(upArrow, {time = 1000, xScale=1.2, yScale = 1.2, iterations = 7, onComplete=alpha}))
 		timer.performWithDelay(transition.to(downArrow, {time = 1000, xScale = 1.2, yScale = 1.2, iterations = 7, onComplete=alpha}))
 		timer.performWithDelay(transition.fadeOut(boundariesText, {time=8000}))
+		-- redirect to showCrates to perform the next portion of the tutorial
+		timer.performWithDelay(13000, showCrates, 1)
+
 	end
+
 
 
 
@@ -163,7 +210,7 @@ function scene:create( event )
 	function platformScroll()
 		local dt = getDeltaTime()
 
-		if (gameHasStarted) then
+		if (gameHasStarted and gamePaused == false) then
 			scrollingForeground1:translate( -1*dt, 0 )
 			scrollingForeground2:translate( -1*dt, 0 )
 			background1:translate( -0.25*dt, 0 )
@@ -179,7 +226,15 @@ function scene:create( event )
 		   		background1.x = 0
 		   		background2.x = display.contentWidth*2
 			end
-		end
+			-- if a crate is showing, then scroll it as well
+			if (crateShowing) then
+				if next(questionCrates) ~= nil then
+					for _, item in ipairs(questionCrates) do
+						item:translate(-1*dt, 0)
+						timer.performWithDelay(transition.to(item, {time = 1000, xScale=1.4, yScale = 1.4, iterations = 10}))
+					end
+				end  
+		end end
 	end
 
 	Runtime:addEventListener("enterFrame", platformScroll)
@@ -189,19 +244,23 @@ function scene:create( event )
 		 helicopter:setLinearVelocity(0, -100)
 	end
 
-	local firstTouch = true
+
 	-- method to detect whether or not the user has started flying
 	local firstTouch = true
 	local function isFlying( event )
 		-- start physics on first touch
-		if firstTouch then
+		if firstTouch and gamePaused == false then
 			createCoins()
 			physics.start()
 			timer.performWithDelay(5000, warnBoundaries, 1)
 			firstTouch = false
 			transition.fadeOut(instructions, {time=800})
 			gameHasStarted = true
-		end
+		elseif gamePaused == true then
+			physics.pause()
+			helicopter:setLinearVelocity(0, 0)
+			gameHasStarted = false
+		end 
 		if event.phase == "began" then
 			-- resume physics after transition from question
 			if physicsIsPaused then
