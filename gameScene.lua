@@ -49,7 +49,7 @@ function scene:create( event )
 
 	--background:setFillColor( .5 )
 	
--- Function to detect collision (helicopter, event such as foreground collision)
+    -- Function to detect collision (helicopter, event such as foreground collision)
 	local function helicopterCollision(self, event)
 		-- want to know when the collision starts:
 		if event.phase == "began" then
@@ -255,7 +255,7 @@ function scene:show( event )
 			drKripp:setLinearVelocity(0, -100)
 			firstTouch = false
 		end
-		print(drKripp.y)
+		--print(drKripp.y)
 	end
 	
 	if phase == "will" then

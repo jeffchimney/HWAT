@@ -40,8 +40,11 @@ local overlayOptions ={
 -- 'onRelease' event listener for playBtn
 local function onPlayBtnRelease()
 	
-	-- go to level1.lua scene
-	composer.gotoScene( "gameScene", "fade", 500 )
+	--if DEVICE_ID == ID_DATA[1] then
+	--composer.gotoScene( "gameScene", "fade", 500 )
+--else -- else the user will be taken to a practice screen to show how the game works
+	composer.gotoScene( "tutorialGame", "fade", 500 )
+--end
 	
 	return true	-- indicates successful touch
 end
