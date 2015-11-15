@@ -19,6 +19,9 @@ local overlayOptions ={
 	width = 80
 }
 
+_G.questionAnswered = false -- global to determine if the user has answered the question.
+							-- This will be used in the tutorialScene so we know to begin the timer again.
+
 local function btnTap(event)
 	event.target.xScale = 0.95
 	event.target.yScale = 0.95
@@ -30,6 +33,9 @@ local function hideOverlay(event)
 	_G.tutorialPaused = false
 	_G.physicsTutorialPaused = false
 	_G.tutorialHasStarted = true
+	_G.questionAnswered = true
+	_G.tutorialBoost = true
+	timer.resume(_G.coinTimer)
 	physics.start()
 	composer.hideOverlay("fade", 800)
 end 

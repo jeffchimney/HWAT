@@ -19,8 +19,14 @@ local helicopter
 -- use this to determine whether or not the game has started
 _G.tutorialHasStarted = false;
 _G.tutorialPaused = false -- used to show whether or not the entire game is paused
+_G.tutorialCoins = 0 -- store the amount of coins a user has in the game
 local crateShowing
 local questionCrates -- table to store the crates into
+local coins -- table to store coins into
+local coinShowing
+local newCrate
+local seconds = 0 -- used to keep track of amount of seconds player will boost for
+local maxTime = 5 -- 5 seconds maximum boost time
 local spriteSheetOptions = {
 	width = 100,
 	height = 100,
@@ -35,7 +41,9 @@ overlayOptions ={
 	width = 80
 }
 
-local newCrate
+_G.tutorialBoost = false -- this will store whether or not a user has a boost that can be used.  (Will be true if they answer the question correctly)
+
+
 
 
 local function onHomeRelease(event)
@@ -48,6 +56,8 @@ function scene:create( event )
 
 	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
+	coins = {} -- initialize the coin table
+
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
 	background1.anchorY = 0
@@ -67,6 +77,12 @@ function scene:create( event )
 	instructions.x = display.contentCenterX
 	instructions.y = display.contentCenterY
 	sceneGroup:insert(instructions)
+
+	amountOfCoins = display.newText(tostring(_G.tutorialCoins), 264, 42, "FuturaLT", 20)
+	amountOfCoins.y = display.contentHeight * 0.8
+	amountOfCoins.x = display.contentWidth * 0.9
+	amountOfCoins:setFillColor(0.26)
+	sceneGroup:insert(amountOfCoins)
 
 	---------------------- Section to create the helicopter ------------------------------
 	-- make a helicopter (off-screen), position it, and rotate slightly
@@ -99,7 +115,8 @@ function scene:create( event )
 	sceneGroup:insert(scrollingForeground1)
 
 	-- function that be called to spawn a spinning coin, this can be altered to change the position once we include collisions
-	local function createCoins()
+	function createCoins()
+		coinShowing = true
 		-- create a sprite sheet animation for a coin spinning
 		local coin_sheet = graphics.newImageSheet("coin.png", spriteSheetOptions)
 		-- create the sequence of animations from the coin sheet
@@ -115,34 +132,66 @@ function scene:create( event )
 
 		local spinningCoin = display.newSprite(coin_sheet, coin_sequences)
 		sceneGroup:insert(spinningCoin)
-		spinningCoin.x = display.contentCenterX
-		spinningCoin.y = display.contentHeight * 0.1
+		spinningCoin.y = display.contentHeight * 0.6
+		spinningCoin.x = display.contentWidth
 		spinningCoin.xScale = 0.30
 		spinningCoin.yScale = 0.30
+		spinningCoin.name = "coin"
 		spinningCoin:play()
-		return spinningCoin
+		-- add physics to the coin
+		physics.addBody( spinningCoin, { density=1.0, friction=0.3, bounce=0.3 } )
+		spinningCoin.gravityScale = 0
+
+		sceneGroup:insert(spinningCoin)
+		table.insert( coins, spinningCoin ) -- store the coins into a table for later use
 	end
 
 	-- function used to detect if anything is colliding with the helicopter
 	local function helicopterCollision(self, event)
 		if event.phase == "began" then
 			if event.other.name == "crate" then
-				newCrate.alpha = 0 -- hide the crate on collision
+				crateShowing = false
+				local currentCrate = event.other  -- store the current crate being collided with into a local
+				currentCrate.alpha = 0 -- hide the crate on collision
+				currentCrate:removeSelf() -- remove the current crate showing from the screen
 				tutorialPaused = true
 				firstTouch = true
 				physics.pause()
 				tutorialHasStarted = false
 				physicsTutorialPaused = true
 				showQuestion()
-			else
-				print("im not a crate!! mwah ah ha ha!!")
+				_G.coinTimer = timer.performWithDelay(7000, createCoins, 1)
+				timer.pause(_G.coinTimer) -- pause this after colliding to avoid a coin appearing away, this will resume once the user answers the question
+			elseif event.other.name == "coin" then
+				coinShowing = false
+				local currentCoin = event.other
+				currentCoin.alpha = 0
+				currentCoin:removeSelf() -- remove the coin from the screen
+				_G.tutorialCoins = _G.tutorialCoins + 1
+				amountOfCoins.text = tostring(_G.tutorialCoins) -- update the amount of coins and display onscreen
+				--print("im not a crate!! mwah ah ha ha!!")
 			end
 		end
+	end
+
+	local function coinCollision(self, event)
+		if event.phase == "began" then
+			if event.other.name == "coin" then
+				coinShowing = false
+				local currentCoin = event.other
+				currentCoin.alpha = 0
+				currentCoin:removeSelf() -- remove the coin from the screen
+				amountOfCoins = amountOfCoins + 1
+		
+			else
+				print('test')
+		end	end
 	end
 
 	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
 	helicopter.collision = helicopterCollision
 	helicopter:addEventListener("collision", helicopter)
+
 
 	function showQuestion()
 		composer.showOverlay("tutorialQuestion", overlayOptions)
@@ -213,9 +262,25 @@ function scene:create( event )
 		timer.performWithDelay(transition.fadeOut(boundariesText, {time=8000}))
 		-- redirect to showCrates to perform the next portion of the tutorial
 		timer.performWithDelay(13000, showCrates, 1)
-
 	end
 
+	-- use this function to increment seconds 
+	local function updateTime()
+		seconds = seconds + 1
+	end
+
+	-- provide the helicopter to boost in the x-direction for a short amount of time
+	function boostHelicopter()
+		local boostTime = timer.performWithDelay(1000, updateTime, maxTime)
+		if seconds ~= maxTime then
+			print(seconds)
+			helicopter:setLinearVelocity(30, -70)
+		elseif seconds == maxTime then
+			_G.tutorialBoost = false -- boost has been used and is no longer available
+			helicopter:setLinearVelocity(0, -100) -- return back to normal speed after boost
+		    Runtime:removeEventListener( "enterFrame", boostHelicopter )
+		end
+	end 
 
 
 
@@ -247,14 +312,21 @@ function scene:create( event )
 						timer.performWithDelay(transition.to(item, {time = 1000, xScale=1.4, yScale = 1.4, iterations = 10}))
 					end
 				end  
-		end end
+			end
+			if (coinShowing) then
+				if next(coins) ~= nil then
+					for _, thisCoin in ipairs(coins) do
+						thisCoin:translate(-1*dt, 0)
+					end					
+			end	end
+		end 
 	end
 
 	Runtime:addEventListener("enterFrame", platformScroll)
 
 	-- move the helicopter while press and hold
 	local function flyHelicopter()
-		 helicopter:setLinearVelocity(0, -100)
+		 helicopter:setLinearVelocity(0,-100)
 	end
 
 
@@ -263,7 +335,6 @@ function scene:create( event )
 	local function isFlying( event )
 		-- start physics on first touch
 		if firstTouch and tutorialPaused == false then
-			createCoins()
 			physics.start()
 			timer.performWithDelay(5000, warnBoundaries, 1)
 			firstTouch = false
@@ -280,7 +351,9 @@ function scene:create( event )
 				physics.start()
 				physicsTutorialPaused = false
 			end
-			
+			if _G.tutorialBoost then
+				Runtime:addEventListener("enterFrame", boostHelicopter)
+			end
 			helicopter.rotation = -7
 			display.getCurrentStage():setFocus( helicopter )
 	        helicopter.isFocus = true
