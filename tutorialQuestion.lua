@@ -69,7 +69,7 @@ function scene:create( event )
 	}
 	trueBtn.x = display.contentWidth*0.5
 	trueBtn.y = display.contentHeight - 80
-	trueBtn:setLabel("If you say so.")
+	trueBtn:setLabel("I'm ready")
 
 	trueBtn:addEventListener ("tap", hideOverlay)
 	sceneGroup:insert(trueBtn)
@@ -79,7 +79,7 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newText( "This is where a question will be displayed.\n Answer correctly and you'll be closer to catching evil Kripp!\nSlip back into those pilot pants and we'll continue!", 264, 42, "FuturaLT", 15 )
+	local titleLogo = display.newText( "This is where a question will be displayed.\nAnswer correctly and you'll be closer to catching evil Kripp.\nLet's keep going!", 264, 42, "FuturaLT", 15 )
 	titleLogo.x = display.contentWidth * 0.5
 	titleLogo.y = 145
 	titleLogo:setFillColor(0.27)

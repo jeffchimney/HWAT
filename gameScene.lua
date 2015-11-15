@@ -19,7 +19,6 @@ local drKripp
 local helicopter
 local questionCrates
 local physicsIsPaused
-local 
 
 local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
@@ -110,7 +109,7 @@ function scene:create( event )
 	spawnQuestionCrate()
 
 	scrollingForeground1.type = "gameOver"
-	-- make a helicopter (off-screen), psosition it, and rotate slightly
+	-- make a helicopter (off-screen), position it, and rotate slightly
 	helicopter = display.newImageRect( "helicopter.png", 90, 90 )
 	helicopter.name = "helicopter"
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
