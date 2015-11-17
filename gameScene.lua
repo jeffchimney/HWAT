@@ -20,11 +20,10 @@ local helicopter
 local questionCrates
 local physicsIsPaused
 
-local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
-local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
+local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
+local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
 
 function scene:create( event )
-
 	-- Called when the scene's view does not exist.
 	-- 
 	-- INSERT code here to initialize the scene
@@ -37,13 +36,29 @@ function scene:create( event )
 	physicsIsPaused = false
 	
 	-- create a grey rectangle as the backdrop
-	local background1 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
+	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
 	background1.anchorY = 0
 	background1.x, background1.y = 0, 0
+	background1.name = "background"
+	sceneGroup:insert(background1)
 
-	local background2 = display.newImageRect( "scrollingBackground.png", screenW*2, screenH )
+	local background2 = display.newImageRect( "bg3.png", screenW*2, screenH )
 	background2.anchorY = 0
 	background2.x, background2.y = screenW*2, 0
+	background2.name = "background"
+	sceneGroup:insert(background2)
+	
+	amountOfCoins = display.newText(tostring(_G.tutorialCoins), 264, 42, "FuturaLT", 20)
+	amountOfCoins.y = display.contentHeight * 0.1
+	amountOfCoins.x = display.contentWidth * 0.1
+	amountOfCoins:setFillColor(0.26)
+	sceneGroup:insert(amountOfCoins)
+	
+	score = display.newText(0, 264, 42, "FuturaLT", 20)
+	score.y = display.contentHeight * 0.1
+	score.x = display.contentWidth * 0.9
+	score:setFillColor(0.26)
+	sceneGroup:insert(score)
 	
 	drKripp = display.newImage("kripplol.png")
 
@@ -53,13 +68,17 @@ function scene:create( event )
 	local function helicopterCollision(self, event)
 		-- want to know when the collision starts:
 		if event.phase == "began" then
+			print(self.name)
+			print(event.other.name)
 			if event.other.name == "crate" then
 				print("Collided with crate")
 				-- pull up question screen
 				physics.pause()
 				physicsIsPaused = true
 				showQuestion()
-			else 
+			elseif event.other.name == nil then
+				print("Collided with something with no assigned name")
+			else
 				print("i am colliding") 
 				composer.gotoScene("gameOver")
 			end
@@ -85,6 +104,7 @@ function scene:create( event )
 	end
 	
 	function spawnQuestionCrate()
+		print("Spawn question crate called.")
 		local newCrate = display.newImageRect( "crate.png", 10, 10 )
 		newCrate.name = "crate"
 	
@@ -110,8 +130,10 @@ function scene:create( event )
 
 	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
-	helicopter = display.newImageRect( "helicopter.png", 90, 90 )
+	helicopter = display.newImageRect( "helicopter2.png", 216, 113 )
 	helicopter.name = "helicopter"
+	helicopter.xScale = 0.62
+	helicopter.yScale = 0.62
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
 	
@@ -163,6 +185,7 @@ function scene:create( event )
 	scrollingForeground1.anchorX = 0
 	scrollingForeground1.anchorY = 1
 	scrollingForeground1.x, scrollingForeground1.y = 0, display.contentHeight+display.contentHeight/6
+	scrollingForeground1.name = "Ground"
 	-- define a shape that's slightly shorter than image bounds (set draw mode to "hybrid" or "debug" to see)
 	local scrollingForegroundShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
 	physics.addBody( scrollingForeground1, "static", { friction=0.3, shape=scrollingForegroundShape } )
@@ -170,6 +193,7 @@ function scene:create( event )
 	scrollingForeground2.anchorX = 0
 	scrollingForeground2.anchorY = 1
 	scrollingForeground2.x, scrollingForeground2.y = display.contentWidth, display.contentHeight+display.contentHeight/6
+	scrollingForeground2.name = "Ground"
 	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	
 
@@ -305,9 +329,11 @@ function scene:destroy( event )
 	-------------------------------------------------------------------------------------
 	scene:removeEventListener("touch", myTapListener)
 	scene:removeEventListener("enterFrame", frameUpdate)
-	helicopter:removeEventListener("collision", helicopter) 
+	helicopter:removeEventListener("collision", helicopter)
 	package.loaded[physics] = nil
 	physics = nil
+	
+	composer.removeScene( "gameScene" )
 end
 
 ---------------------------------------------------------------------------------

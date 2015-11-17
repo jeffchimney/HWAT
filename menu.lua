@@ -43,6 +43,27 @@ local function onPlayBtnRelease()
 	--if DEVICE_ID == ID_DATA[1] then
 	--composer.gotoScene( "gameScene", "fade", 500 )
 --else -- else the user will be taken to a practice screen to show how the game works
+	local function onGetObjects( event )
+		if not event.error and #event.response.results > 0 then
+			-- if you have already completed the tutorial
+			if event.response.results[1].completedTutorial == true then
+				-- go straight to gameplay
+				print("Go to Game Scene")
+				composer.gotoScene( "gameScene", "fade", 500 )
+			else
+				-- go to tutorial
+				print("Go to Tutorial Scene")
+				composer.gotoScene( "tutorialGame", "fade", 500 )
+			end
+		end 
+	end
+	
+	-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+	local queryTable = { 
+	  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+	}
+	parse:getObjects( "User", queryTable, onGetObjects )
+	
 	composer.gotoScene( "tutorialGame", "fade", 500 )
 --end
 	
