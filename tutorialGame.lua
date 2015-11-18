@@ -3,6 +3,8 @@ local composer = require( "composer" )
 local menu = require("menu")
 local scene = composer.newScene()
 local physics = require "physics"
+local theseCoins = require("setupCoins")
+local testItems = require("setupItems") -- testing the items that are available for use
 physics.start(); physics.pause()
 
 -- include Corona's "widget" library
@@ -15,9 +17,8 @@ local width = display.contentWidth
 local height = display.contentHeight 
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 _G.physicsTutorialPaused = false
-local tutorialHelicopter
-local scrollingForeground1
-local scrollingForeground2
+local helicopter
+local userTutorialHeli -- testing to store the helicopter into this local
 -- use this to determine whether or not the game has started
 _G.tutorialHasStarted = false;
 _G.tutorialPaused = false -- used to show whether or not the entire game is paused
@@ -43,7 +44,13 @@ overlayOptions ={
 	width = 80
 }
 
+
+
 _G.tutorialBoost = false -- this will store whether or not a user has a boost that can be used.  (Will be true if they answer the question correctly)
+
+-- Use this file to control the amount of coins a user has
+-- Coins will be saved and retrieved via a text file
+
 
 
 -- 'onRelease' event listener for playBtn, take them to the main game
@@ -58,34 +65,25 @@ end
 
 --------------------------------Begin main scene create ---------------------------------------------------
 function scene:create( event )
-	
-	-- called when an parse is queried for an object
-	local function onGetObjects( event )
-		-- if there are no errors and your deviceID is already in the system
-		if not event.error and #event.response.results > 0 then
-			-- update User.completedTutorial to true
-			local updateDataTable = { ["completedTutorial"] = true }
-			parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
-		end 
-		
-	end
-	
-	-- called when a parse object is updated
-	local function onUpdateObject( event )
-		if not event.error then
-	    	print( event.response.createdAt )
-	 	end
-	end
-	-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
-	local queryTable = { 
-	  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
-	}
-	parse:getObjects( "User", queryTable, onGetObjects )
-	
 	local sceneGroup = self.view
 	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
 	coins = {} -- initialize the coin table
+	local writeText = theseCoins.init({
+		filename = "coinFile.txt"
+	})
+
+
+
+	theseCoins.set(20)
+	theseCoins.save()
+
+	local itemText = testItems.init({
+		filename = "itemsFile.txt"
+	})
+
+	print(testItems.load())
+	userTutorialHeli = testItems.load -- store the heli the user has decided to choose into a variable which will be passed into rendering.
 
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
@@ -120,24 +118,35 @@ function scene:create( event )
 	amountOfCoins:setFillColor(0.26)
 	sceneGroup:insert(amountOfCoins)
 
-	---------------------- Section to create the tutorialHelicopter ------------------------------
-	-- make a tutorialHelicopter (off-screen), position it, and rotate slightly
-	tutorialHelicopter = display.newImageRect( "helicopter2.png", 216, 113 )
-	tutorialHelicopter.name = "helicopter"
-	tutorialHelicopter.xScale = 0.62
-	tutorialHelicopter.yScale = 0.62
-	tutorialHelicopter.x, tutorialHelicopter.y = screenW - screenW * 0.85, screenH/2
-	tutorialHelicopter.rotation = 0
+
+	-- print(theseCoins.load())
+	---------------------- Section to create the helicopter ------------------------------
+	-- make a helicopter (off-screen), position it, and rotate slightly
+
+	-- this function will be used to pass in the userTutorialHeli variable to display their choice of copter
+	function createMyTutorialHeli(imageInput) 
+		helicopter = display.newImageRect(imageInput, 216, 113)
+		return helicopter
+	end
+	createMyTutorialHeli("Biplane.png")
+
+	--helicopter = display.newImageRect( "helicopter2.png", 216, 113 )
+	helicopter.name = "helicopter"
+	helicopter.xScale = 0.62
+	helicopter.yScale = 0.62
+	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
+	helicopter.rotation = 0
+
 	
-	-- add physics to the tutorialHelicopter
+	-- add physics to the helicopter
 	-- provide a radius of 50 to tighten the bounds of collision
-	physics.addBody( tutorialHelicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
-	sceneGroup:insert(tutorialHelicopter)
+	physics.addBody( helicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
+	sceneGroup:insert(helicopter)
 
 
 	---------------------------- Placement of scrolling forgrounds -----------------------------------------------
-	scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
-    scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
+	local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
+    local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
 
 	scrollingForeground1.anchorX = 0
 	scrollingForeground1.anchorY = 1
@@ -150,8 +159,8 @@ function scene:create( event )
 	scrollingForeground2.x, scrollingForeground2.y = display.contentWidth, display.contentHeight+display.contentHeight/6
 	physics.addBody( scrollingForeground2, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	
-	sceneGroup:insert(scrollingForeground1)
 	sceneGroup:insert(scrollingForeground2)
+	sceneGroup:insert(scrollingForeground1)
 
 	function pauseTutorial()
 		tutorialPaused = true
@@ -237,8 +246,8 @@ function scene:create( event )
 		table.insert( coins, spinningCoin ) -- store the coins into a table for later use
 	end
 
-	-- function used to detect if anything is colliding with the tutorialHelicopter
-	local function tutorialHelicopterCollision(self, event)
+	-- function used to detect if anything is colliding with the helicopter
+	local function helicopterCollision(self, event)
 		if event.phase == "began" then
 			if event.other.name == "crate" then
 				crateShowing = false
@@ -254,9 +263,12 @@ function scene:create( event )
 				_G.coinTimer = timer.performWithDelay(7000, createCoins, 1)
 				timer.pause(_G.coinTimer) -- pause this after colliding to avoid a coin appearing away, this will resume once the user answers the question
 			
-			elseif event.other.name == "coin" then -- check if tutorialHelicopter is colliding with a coin
+			elseif event.other.name == "coin" then -- check if helicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
 				coinShowing = false
+				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
+				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
+				theseCoins.save() -- save the text file
 				local currentCoin = event.other
 				currentCoin.alpha = 0
 				currentCoin:removeSelf() -- remove the coin from the screen
@@ -270,9 +282,9 @@ function scene:create( event )
 	end
 
 
-	-- set up tutorialHelicopter collision listeners to pass into tutorialHelicopterCollision(self,event)
-	tutorialHelicopter.collision = tutorialHelicopterCollision
-	tutorialHelicopter:addEventListener("collision", tutorialHelicopter)
+	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
+	helicopter.collision = helicopterCollision
+	helicopter:addEventListener("collision", helicopter)
 
 
 	function showQuestion()
@@ -357,7 +369,7 @@ function scene:create( event )
 		seconds = seconds + 1
 	end
 
-	-- provide the tutorialHelicopter to boost in the x-direction for a short amount of time
+	-- provide the helicopter to boost in the x-direction for a short amount of time
 	function boostHelicopter()
 		timer.performWithDelay(6000, setAlpha(coinText), 1) -- allow for the coin text to appear
 		transition.fadeOut(coinText, {time = 6000})
@@ -365,9 +377,9 @@ function scene:create( event )
 		local boostTime = timer.performWithDelay(1000, updateTime, maxTime)
 		if seconds ~= maxTime then
 			print(seconds)
-			tutorialHelicopter:setLinearVelocity(50, -50)
+			helicopter:setLinearVelocity(50, -50)
 		elseif seconds == maxTime then
-			tutorialHelicopter:setLinearVelocity(0, -100) -- return back to normal speed after boost
+			helicopter:setLinearVelocity(0, -100) -- return back to normal speed after boost
 		    Runtime:removeEventListener( "enterFrame", boostHelicopter )
 		end
 	end 
@@ -450,16 +462,16 @@ function scene:create( event )
 
 	Runtime:addEventListener("enterFrame", platformScroll)
 
-	-- move the tutorialHelicopter while press and hold
+	-- move the helicopter while press and hold
 	local function flyHelicopter()
-		if tutorialHelicopter.isBodyActive ~= true and tutorialHelicopter.isBodyActive ~= false then
-			physics.addBody( tutorialHelicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
-			tutorialHelicopter:setLinearVelocity(0,-100)
+		if helicopter.isBodyActive ~= true and helicopter.isBodyActive ~= false then
+			physics.addBody( helicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
+			helicopter:setLinearVelocity(0,-100)
 			-- set up ground physics
 			local scrollingForegroundShape = { -halfW,-34, halfW,-34, halfW,34, -halfW,34 }
 			physics.addBody( scrollingForeground1, "static", { friction=0.3, shape=scrollingForegroundShape } )
 	    else
-			tutorialHelicopter:setLinearVelocity(0,-100)
+			helicopter:setLinearVelocity(0,-100)
 		end
 	end
 
@@ -476,7 +488,7 @@ function scene:create( event )
 			tutorialHasStarted = true
 		elseif tutorialPaused == true then
 			physics.pause()
-			tutorialHelicopter:setLinearVelocity(0, 0)
+			helicopter:setLinearVelocity(0, 0)
 			tutorialHasStarted = false
 		end 
 		if event.phase == "began" then
@@ -488,17 +500,17 @@ function scene:create( event )
 			if _G.tutorialBoost then
 				Runtime:addEventListener("enterFrame", boostHelicopter)
 			end
-			tutorialHelicopter.rotation = -7
-			display.getCurrentStage():setFocus( tutorialHelicopter )
-	        tutorialHelicopter.isFocus = true
+			helicopter.rotation = -7
+			display.getCurrentStage():setFocus( helicopter )
+	        helicopter.isFocus = true
 			Runtime:addEventListener( "enterFrame", flyHelicopter )
-		    elseif tutorialHelicopter.isFocus then              
+		    elseif helicopter.isFocus then              
 		    	if event.phase == "moved" then
 		    	elseif event.phase == "ended" then
 	        	Runtime:removeEventListener( "enterFrame", flyHelicopter )
             	display.getCurrentStage():setFocus( nil )
-   			 	tutorialHelicopter.isFocus = false
-				tutorialHelicopter.rotation = 2
+   			 	helicopter.isFocus = false
+				helicopter.rotation = 2
 		    end
 		end
 	end
