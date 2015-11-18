@@ -19,6 +19,7 @@ local drKripp
 local helicopter
 local questionCrates
 local physicsIsPaused
+local score
 
 local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
@@ -34,6 +35,7 @@ function scene:create( event )
 	--initialize questionCrates
 	questionCrates = {}
 	physicsIsPaused = false
+	score = 0
 	
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
@@ -52,13 +54,11 @@ function scene:create( event )
 	amountOfCoins.y = display.contentHeight * 0.1
 	amountOfCoins.x = display.contentWidth * 0.1
 	amountOfCoins:setFillColor(0.26)
-	sceneGroup:insert(amountOfCoins)
 	
-	score = display.newText(0, 264, 42, "FuturaLT", 20)
-	score.y = display.contentHeight * 0.1
-	score.x = display.contentWidth * 0.9
-	score:setFillColor(0.26)
-	sceneGroup:insert(score)
+	scoreLabel = display.newText(score, 264, 42, "FuturaLT", 20)
+	scoreLabel.y = display.contentHeight * 0.1
+	scoreLabel.x = display.contentWidth * 0.9
+	scoreLabel:setFillColor(0.26)
 	
 	drKripp = display.newImage("kripplol.png")
 
@@ -76,10 +76,22 @@ function scene:create( event )
 				physics.pause()
 				physicsIsPaused = true
 				showQuestion()
+			elseif event.other.name == "coin" then -- check if tutorialHelicopter is colliding with a coin
+				media.playSound("coinCollide.wav") -- play a coin sound on collision
+				coinShowing = false
+				local currentCoin = event.other
+				currentCoin.alpha = 0
+				currentCoin:removeSelf() -- remove the coin from the screen
+				_G.tutorialCoins = _G.tutorialCoins + 1
+				amountOfCoins.text = tostring(_G.tutorialCoins) -- update the amount of coins and display onscreen
+				timer.performWithDelay(transition.to(amountOfCoins, {time = 1000, xScale=1.3, yScale = 1.3, iterations = 4}))
+				timer.performWithDelay(7000, spawnKripp, 1)
+				--print("im not a crate!! mwah ah ha ha!!")
 			elseif event.other.name == nil then
 				print("Collided with something with no assigned name")
 			else
 				print("i am colliding") 
+				
 				composer.gotoScene("gameOver")
 			end
 			--Change functions of this later once we have added in score variables and such:
@@ -203,6 +215,8 @@ function scene:create( event )
 	sceneGroup:insert( scrollingForeground1 )
 	sceneGroup:insert( scrollingForeground2 )
 	sceneGroup:insert( helicopter )
+	sceneGroup:insert(scoreLabel)
+	sceneGroup:insert(amountOfCoins)
 	
 	--  start scrolling background, will rearrange backgrounds once one is off screen
 	local runtime = 0
@@ -216,7 +230,13 @@ function scene:create( event )
 	
 	-- Frame update function
 	local function frameUpdate()
+		if physicsIsPaused == false then
+			score = score + 1
+		end
 		
+		if score % 10 == 0 and physicsIsPaused == false then
+			scoreLabel.text = tostring(score/10)
+		end
 
 	   -- Delta Time value
 	   local dt = getDeltaTime()
