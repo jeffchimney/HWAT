@@ -65,6 +65,29 @@ end
 
 --------------------------------Begin main scene create ---------------------------------------------------
 function scene:create( event )
+	-- called when an parse is queried for an object
+	local function onGetObjects( event )
+		-- if there are no errors and your deviceID is already in the system
+		if not event.error and #event.response.results > 0 then
+			-- update User.completedTutorial to true
+			local updateDataTable = { ["completedTutorial"] = true }
+			parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
+		end 
+		
+	end
+	
+	-- called when a parse object is updated
+	local function onUpdateObject( event )
+		if not event.error then
+	    	print( event.response.createdAt )
+	 	end
+	end
+	-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+	local queryTable = { 
+	  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+	}
+	parse:getObjects( "User", queryTable, onGetObjects )
+	
 	local sceneGroup = self.view
 	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
