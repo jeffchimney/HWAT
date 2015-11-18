@@ -3,6 +3,8 @@ local composer = require( "composer" )
 local menu = require("menu")
 local scene = composer.newScene()
 local physics = require "physics"
+local theseCoins = require("setupCoins")
+local testItems = require("setupItems") -- testing the items that are available for use
 physics.start(); physics.pause()
 
 -- include Corona's "widget" library
@@ -16,6 +18,7 @@ local height = display.contentHeight
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 _G.physicsTutorialPaused = false
 local helicopter
+local userTutorialHeli -- testing to store the helicopter into this local
 -- use this to determine whether or not the game has started
 _G.tutorialHasStarted = false;
 _G.tutorialPaused = false -- used to show whether or not the entire game is paused
@@ -41,7 +44,13 @@ overlayOptions ={
 	width = 80
 }
 
+
+
 _G.tutorialBoost = false -- this will store whether or not a user has a boost that can be used.  (Will be true if they answer the question correctly)
+
+-- Use this file to control the amount of coins a user has
+-- Coins will be saved and retrieved via a text file
+
 
 
 -- 'onRelease' event listener for playBtn, take them to the main game
@@ -60,6 +69,21 @@ function scene:create( event )
 	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
 	coins = {} -- initialize the coin table
+	local writeText = theseCoins.init({
+		filename = "coinFile.txt"
+	})
+
+
+
+	theseCoins.set(20)
+	theseCoins.save()
+
+	local itemText = testItems.init({
+		filename = "itemsFile.txt"
+	})
+
+	print(testItems.load())
+	userTutorialHeli = testItems.load -- store the heli the user has decided to choose into a variable which will be passed into rendering.
 
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
@@ -94,14 +118,25 @@ function scene:create( event )
 	amountOfCoins:setFillColor(0.26)
 	sceneGroup:insert(amountOfCoins)
 
+
+	-- print(theseCoins.load())
 	---------------------- Section to create the helicopter ------------------------------
 	-- make a helicopter (off-screen), position it, and rotate slightly
-	helicopter = display.newImageRect( "helicopter2.png", 216, 113 )
+
+	-- this function will be used to pass in the userTutorialHeli variable to display their choice of copter
+	function createMyTutorialHeli(imageInput) 
+		helicopter = display.newImageRect(imageInput, 216, 113)
+		return helicopter
+	end
+	createMyTutorialHeli("Biplane.png")
+
+	--helicopter = display.newImageRect( "helicopter2.png", 216, 113 )
 	helicopter.name = "helicopter"
 	helicopter.xScale = 0.62
 	helicopter.yScale = 0.62
 	helicopter.x, helicopter.y = screenW - screenW * 0.85, screenH/2
 	helicopter.rotation = 0
+
 	
 	-- add physics to the helicopter
 	-- provide a radius of 50 to tighten the bounds of collision
@@ -231,6 +266,9 @@ function scene:create( event )
 			elseif event.other.name == "coin" then -- check if helicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
 				coinShowing = false
+				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
+				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
+				theseCoins.save() -- save the text file
 				local currentCoin = event.other
 				currentCoin.alpha = 0
 				currentCoin:removeSelf() -- remove the coin from the screen

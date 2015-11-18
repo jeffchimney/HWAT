@@ -63,8 +63,8 @@ end
 --	return true
 -->>>>>>> External Changes
 --=======
-local function onTutorialRelease()
-	composer.gotoScene("Tutorial", "fade", 500)
+local function onStoreRelease()
+	composer.gotoScene("gameStore", "fade", 500)
 end
 
 local function onCreditRelease(event)
@@ -117,8 +117,8 @@ function scene:create( event )
 	tutorialBtn = widget.newButton(options)
 	tutorialBtn.x = display.contentWidth*0.5
 	tutorialBtn.y = display.contentHeight - 90
-	tutorialBtn:setLabel("How")
-	tutorialBtn:addEventListener("tap", onTutorialRelease)
+	tutorialBtn:setLabel("Store")
+	tutorialBtn:addEventListener("tap", onStoreRelease)
 
 
 	-- Credit Button Settings --

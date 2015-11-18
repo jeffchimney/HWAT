@@ -1,16 +1,15 @@
 -----------------------------------------------------------------------------------------
 --
--- level1.lua
+-- gameScene.lua
 --
 -----------------------------------------------------------------------------------------
 
 local composer = require( "composer" )
 local scene = composer.newScene()
-
+local myItems = require("setUpItems") -- user the setupItems.lua file to show the items that the user has available
 -- include Corona's "physics" library
 local physics = require "physics"
 physics.start(); physics.pause()
-
 --------------------------------------------
 
 -- forward declarations and other locals
@@ -19,6 +18,7 @@ local drKripp
 local helicopter
 local questionCrates
 local physicsIsPaused
+local helicopterChosen -- this will store the helicopter the user has decided to use for the current game
 
 local scrollingForeground1 = display.newImageRect( "grass.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "grass.png", screenW+5, 82 )
@@ -31,6 +31,11 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	local sceneGroup = self.view
+
+	-- Initalize the iteems available by calling the text file in which they exist
+	local itemText = myItems.init({
+		filename = "itemsFile.txt"
+	})
 	
 	--initialize questionCrates
 	questionCrates = {}
