@@ -27,7 +27,7 @@ local options = {
 
 
 local function buttonChoice(event)
-	composer.gotoScene(event.target.destination, "fade", 500)
+	composer.gotoScene(event.target.destination, "fade", 250)
 end 
 
 

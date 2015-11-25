@@ -20,6 +20,7 @@ local helicopter
 local questionCrates
 local physicsIsPaused
 local score
+local firstTouch = true
 
 local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
@@ -92,6 +93,33 @@ function scene:create( event )
 			else
 				print("i am colliding") 
 				
+				-- called when an parse is queried for an object
+				local function onGetObjects( event )
+					-- if there are no errors and your deviceID is already in the system
+					if not event.error then
+						-- update User.highScore if they have broken their previous record.
+						if event.response.results[1].highScore < tonumber( scoreLabel.text ) then
+							local updateDataTable = { ["highScore"] = tonumber( scoreLabel.text ) }
+							parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
+						end
+					end 
+		
+				end
+	
+				-- called when a parse object is updated
+				local function onUpdateObject( event )
+					if not event.error then
+				    	print( event.response.createdAt )
+				 	end
+				end
+				-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+				local queryTable = { 
+				  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+				}
+				parse:getObjects( "User", queryTable, onGetObjects )
+				Runtime:removeEventListener( "enterFrame", frameUpdate )
+				firstTouch = true
+				score = 0
 				composer.gotoScene("gameOver")
 			end
 			--Change functions of this later once we have added in score variables and such:
@@ -117,7 +145,7 @@ function scene:create( event )
 	
 	function spawnQuestionCrate()
 		print("Spawn question crate called.")
-		local newCrate = display.newImageRect( "crate.png", 10, 10 )
+		local newCrate = display.newImageRect( "crate.png", 20, 20 )
 		newCrate.name = "crate"
 	
 		if drKripp.y >= screenH/2 then
@@ -131,7 +159,7 @@ function scene:create( event )
 		--newCrate:addEventListener("collision", newCrate)
 
 		-- add physics to the helicopter
-		physics.addBody( newCrate, { density=1.0, friction=0.3, bounce=0.3 } )
+		physics.addBody( newCrate, {radius = 25, density=1.0, friction=0.3, bounce=0.3 } )
 		newCrate.gravityScale = 0
 	
 		table.insert( questionCrates, newCrate )
@@ -154,7 +182,7 @@ function scene:create( event )
 	helicopter:addEventListener("collision", helicopter)
 	
 	-- add physics to the helicopter
-	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
+	physics.addBody( helicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
 	
 	-- move the helicopter while press and hold
 	local function flyHelicopter()
@@ -164,12 +192,18 @@ function scene:create( event )
 	local firstTouch = true
 	local function myTapListener( event )
 		-- start physics on first touch
+		print(firstTouch)
 		if firstTouch then
+			score = 0
 			physics.start()
 			firstTouch = false
+			scoreLabel.alpha = 1
 		end
 		if event.phase == "began" then
 			-- resume physics after transition from question
+			if scoreLabel.alpha == 0 then
+				scoreLabel.alpha = 1
+			end
 			if physicsIsPaused then
 				physics.start()
 				physicsIsPaused = false
@@ -290,6 +324,7 @@ function scene:show( event )
 	local phase = event.phase
 	
 	firstTouch = true
+	print(firstTouch)
 	local function handleKrippMovement()
 		if drKripp.y <= 50 then
 			drKripp:setLinearVelocity(0, 100)
@@ -303,13 +338,15 @@ function scene:show( event )
 	end
 	
 	if phase == "will" then
+		helicopter.y = display.contentHeight/2
+		scoreLabel.alpha = 0
 		setupKripp()
 		spawnQuestionCrate()
 		Runtime:addEventListener( "enterFrame", handleKrippMovement )
 		
 		-- Called when the scene is still off screen and is about to move on screen
 	elseif phase == "did" then
-
+		firstTouch = true
 		-- Called when the scene is now on screen
 		-- 
 		-- INSERT code here to make the scene come alive
