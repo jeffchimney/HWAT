@@ -79,7 +79,7 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newText( "This is where a question will be displayed.\nAnswer correctly and you'll be closer to catching evil Kripp.\nLet's keep going!", 264, 42, "FuturaLT", 15 )
+	local titleLogo = display.newText( "This is where a question will be displayed.\nAnswer correctly and you'll be closer to catching evil Kripp.\nLet's keep going!", 0, 0, 264, 42, "FuturaLT", 15)
 	titleLogo.x = display.contentWidth * 0.5
 	titleLogo.y = 145
 	titleLogo:setFillColor(0.27)

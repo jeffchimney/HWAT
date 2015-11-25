@@ -224,7 +224,7 @@ function scene:create( event )
 
 	-- function to be called to spawn kripp later on in the tutorial
 	function spawnKripp()
-		local krippText = display.newText( "Uh Oh, here comes Dr. Kripp.\nDon't worry, we're closer to catching him.\nKeep answering those questions and\nhe'll be ours in no time.", 264, 42, "FuturaLT", 15 )
+		local krippText = display.newText( "Uh Oh, here comes Dr. Kripp.\nDon't worry, we're closer to catching him.\nKeep answering those questions and\nhe'll be ours in no time.", 0, 0, 264, 42, "FuturaLT", 15)
 		krippText.x = display.contentWidth * 0.7
 		krippText.y = 150
 		krippText:setFillColor(0.26)
@@ -359,7 +359,7 @@ function scene:create( event )
 	
 	-- function called to warn user of boundaries
 	local function warnBoundaries()
-		local boundariesText = display.newText( "Great Job!\nBut don't get too rambunctious...\nWatch out for those boundaries!", 264, 42, "FuturaLT", 15 )
+		local boundariesText = display.newText( "Great Job!\nBut don't get too rambunctious...\nWatch out for those boundaries!", 0, 0, 264, 42, "FuturaLT", 15)
 		boundariesText.x = display.contentWidth * 0.7
 		boundariesText.y = 150
 		boundariesText:setFillColor(0.26)
@@ -417,7 +417,7 @@ function scene:create( event )
 		Overlay.alpha = 0.9
 		Overlay.isHitTestable = true
 
-		local readyText = display.newText( "You're getting the hang of this.\nNow let's catch Dr. Kripp before he gets away!", 264, 42, "FuturaLT", 16)
+		local readyText = display.newText( "You're getting the hang of this.\nNow let's catch Dr. Kripp before he gets away!", 0, 0, 264, 42, "FuturaLT", 15)
 		readyText.x = display.contentWidth * 0.5
 		readyText.y = 120
 		readyText:setFillColor(0.26)
@@ -567,7 +567,7 @@ function scene:show( event )
 		physics.pause()
 		tutorialHasStarted = false
 		physicsTutorialPaused = true
-		local onPauseText = display.newText( "Look ahead, here comes a crate!\nCollide with, and answer questions to gain a boost.\nGive it a shot!", 264, 42, "FuturaLT", 15 )
+		local onPauseText = display.newText( "Look ahead, here comes a crate!\nCollide with, and answer questions to gain a boost.\nGive it a shot!", 0, 0, 264, 42, "FuturaLT", 15)
 		onPauseText.x = display.contentWidth * 0.65
 		onPauseText.y = 150
 		onPauseText:setFillColor(0.26)
