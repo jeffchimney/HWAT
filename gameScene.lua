@@ -5,37 +5,70 @@
 -----------------------------------------------------------------------------------------
 
 local composer = require( "composer" )
+local theseCoins = require("setupCoins")
+local testItems = require("setupItems") -- testing the items that are available for use
+-- include Corona's "widget" library
+local widget = require "widget"
+
 local scene = composer.newScene()
 
 -- include Corona's "physics" library
 local physics = require "physics"
 physics.start(); physics.pause()
 
+
+_G.gameCoins = 0
 --------------------------------------------
 
 -- forward declarations and other locals
-local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
+local screenW = display.contentWidth
+local screenH = display.contentHeight
+local halfW = display.contentWidth * 0.5
 local drKripp
 local helicopter
 local questionCrates
-local physicsIsPaused
+_G.physicsPaused = false
 local score
+local firstTouch
+local thisCrate -- store the crate that has already been collided with
+_G.gameHasStarted = false
+_G.gamePaused = false
 
 local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
+
+local overlayOptions ={
+	isModal = false,
+	effect = "fade",
+	time = 1000,
+	height = 80,
+	width = 80
+}
 
 function scene:create( event )
 	-- Called when the scene's view does not exist.
 	-- 
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
-
 	local sceneGroup = self.view
+
+	local writeText = theseCoins.init({
+		filename = "coinFile.txt"
+	})
+
+	theseCoins.save()
+
+	local itemText = testItems.init({
+		filename = "itemsFile.txt"
+	})
+
+	print(testItems.load())
+	userTutorialHeli = testItems.load -- store the heli the user has decided to choose into a variable which will be passed into rendering.
 	
 	--initialize questionCrates
 	questionCrates = {}
-	physicsIsPaused = false
 	score = 0
+
 	
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
@@ -50,7 +83,7 @@ function scene:create( event )
 	background2.name = "background"
 	sceneGroup:insert(background2)
 	
-	amountOfCoins = display.newText(tostring(_G.tutorialCoins), 264, 42, "FuturaLT", 20)
+	amountOfCoins = display.newText(tostring(_G.gameCoins), 264, 42, "FuturaLT", 20)
 	amountOfCoins.y = display.contentHeight * 0.1
 	amountOfCoins.x = display.contentWidth * 0.1
 	amountOfCoins:setFillColor(0.26)
@@ -62,6 +95,33 @@ function scene:create( event )
 	
 	drKripp = display.newImage("kripplol.png")
 
+	local function onInventoryRelease(event)
+		pauseMainGame()
+		composer.showOverlay("inventoryOverlay", overlayOptions)
+		return true
+	end
+
+	-- Inventory Button Settings --
+	local itemBtn = widget.newButton{
+	defaultFile = "bakpack.png"
+	}
+	itemBtn.destination = "inventoryOverlay"
+	itemBtn:addEventListener("tap", onInventoryRelease)
+
+	itemBtn.x = display.contentWidth * 0.05
+	itemBtn.y = display.contentHeight * 0.93
+	itemBtn.xScale = 0.37
+	itemBtn.yScale = 0.37
+
+	function pauseMainGame()
+		gamePaused = true
+		firstTouch = true
+		gamePaused = true
+		physics.pause()
+		gameHasStarted = false
+		physicsPaused = true
+	end
+
 	--background:setFillColor( .5 )
 	
     -- Function to detect collision (helicopter, event such as foreground collision)
@@ -70,22 +130,26 @@ function scene:create( event )
 		if event.phase == "began" then
 			print(self.name)
 			print(event.other.name)
+			-- this section will need to be updated
 			if event.other.name == "crate" then
-				print("Collided with crate")
-				-- pull up question screen
-				physics.pause()
-				physicsIsPaused = true
-				showQuestion()
+				--event.other:removeSelf()
+				currCrate = event.other
+				currCrate.alpha = 0
+				event.other = nil;
+				pauseMainGame()
+				showGameQuestion()
+				
 			elseif event.other.name == "coin" then -- check if tutorialHelicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
 				coinShowing = false
 				local currentCoin = event.other
 				currentCoin.alpha = 0
 				currentCoin:removeSelf() -- remove the coin from the screen
-				_G.tutorialCoins = _G.tutorialCoins + 1
-				amountOfCoins.text = tostring(_G.tutorialCoins) -- update the amount of coins and display onscreen
-				timer.performWithDelay(transition.to(amountOfCoins, {time = 1000, xScale=1.3, yScale = 1.3, iterations = 4}))
-				timer.performWithDelay(7000, spawnKripp, 1)
+				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
+				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
+				theseCoins.save() -- save the text file
+				_G.gameCoins = _G.gameCoins + 1
+				amountOfCoins.text = tostring(_G.gameCoins) -- update the amount of coins and display onscreen
 				--print("im not a crate!! mwah ah ha ha!!")
 			elseif event.other.name == nil then
 				print("Collided with something with no assigned name")
@@ -102,6 +166,7 @@ function scene:create( event )
 		end
 	end
 
+
 	-- Function to set set up Dr.Kripp
 	function setupKripp()
 		local xPos = display.contentWidth * 0.80
@@ -117,28 +182,28 @@ function scene:create( event )
 	
 	function spawnQuestionCrate()
 		print("Spawn question crate called.")
-		local newCrate = display.newImageRect( "crate.png", 10, 10 )
-		newCrate.name = "crate"
+		local gameCrate = display.newImageRect( "crate.png", 10, 10 )
+		gameCrate.name = "crate"
 	
 		if drKripp.y >= screenH/2 then
-			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y - screenH/3
+			gameCrate.x, gameCrate.y = screenW + screenW/5, drKripp.y - screenH/3
 		else
-			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y + screenH/3
+			gameCrate.x, gameCrate.y = screenW + screenW/5, drKripp.y + screenH/3
 		end
 	
 		-- set up crate collision listeners to pass into helicopterCollision(self,event)
-		--newCrate.collision = helicopterCollision
-		--newCrate:addEventListener("collision", newCrate)
+		--gameCrate.collision = helicopterCollision
+		--gameCrate:addEventListener("collision", gameCrate)
 
 		-- add physics to the helicopter
-		physics.addBody( newCrate, { density=1.0, friction=0.3, bounce=0.3 } )
-		newCrate.gravityScale = 0
+		physics.addBody( gameCrate, {radius = 25, density=1.0, friction=0.3, bounce=0.3 } )
+		gameCrate.gravityScale = 0
 	
-		table.insert( questionCrates, newCrate )
+		table.insert( questionCrates, gameCrate )
 		
-		sceneGroup:insert(newCrate)
+		sceneGroup:insert(gameCrate)
 	end
-	spawnQuestionCrate()
+	--spawnQuestionCrate()
 
 	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
@@ -152,9 +217,9 @@ function scene:create( event )
 	-- set up helicopter collision listeners to pass into helicopterCollision(self,event)
 	helicopter.collision = helicopterCollision
 	helicopter:addEventListener("collision", helicopter)
-	
+
 	-- add physics to the helicopter
-	physics.addBody( helicopter, { density=1.0, friction=0.3, bounce=0.3 } )
+	physics.addBody( helicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
 	
 	-- move the helicopter while press and hold
 	local function flyHelicopter()
@@ -164,15 +229,20 @@ function scene:create( event )
 	local firstTouch = true
 	local function myTapListener( event )
 		-- start physics on first touch
-		if firstTouch then
+		if firstTouch and gamePaused == false then
 			physics.start()
 			firstTouch = false
+			gameHasStarted = true
+		elseif gamePaused == true then
+			physics.pause()
+			helicopter:setLinearVelocity(0,0)
+			gameHasStarted = false
 		end
 		if event.phase == "began" then
 			-- resume physics after transition from question
-			if physicsIsPaused then
+			if physicsPaused then
 				physics.start()
-				physicsIsPaused = false
+				physicsPaused = false
 			end
 			
 			helicopter.rotation = -7
@@ -217,6 +287,8 @@ function scene:create( event )
 	sceneGroup:insert( helicopter )
 	sceneGroup:insert(scoreLabel)
 	sceneGroup:insert(amountOfCoins)
+	sceneGroup:insert(itemBtn)
+
 	
 	--  start scrolling background, will rearrange backgrounds once one is off screen
 	local runtime = 0
@@ -230,11 +302,11 @@ function scene:create( event )
 	
 	-- Frame update function
 	local function frameUpdate()
-		if physicsIsPaused == false then
+		if physicsPaused == false then
 			score = score + 1
 		end
 		
-		if score % 10 == 0 and physicsIsPaused == false then
+		if score % 10 == 0 and physicsPaused == false then
 			scoreLabel.text = tostring(score/10)
 		end
 
@@ -245,28 +317,29 @@ function scene:create( event )
 	   -- Move the foreground 1 pixel with delta compensation (makes it a bit smoother)
 	   -- We can use this to scroll the background at a slower pace than the foreground
 	   -- it'll look neat.
-	   scrollingForeground1:translate( -1*dt, 0 )
-	   scrollingForeground2:translate( -1*dt, 0 )
-	   background1:translate( -0.25*dt, 0 )
-	   background2:translate( -0.25*dt, 0 )
+	   if(gameHasStarted and gamePaused == false) then
+	   		scrollingForeground1:translate( -1*dt, 0 )
+	   		scrollingForeground2:translate( -1*dt, 0 )
+	   		background1:translate( -0.25*dt, 0 )
+	   		background2:translate( -0.25*dt, 0 )
 	   
-	   if scrollingForeground1.x <= -display.contentWidth then
-		   scrollingForeground1.x = 0
-		   scrollingForeground2.x = display.contentWidth
-	   end
+	   		if scrollingForeground1.x <= -display.contentWidth then
+		   		scrollingForeground1.x = 0
+		   		scrollingForeground2.x = display.contentWidth
+	   		end
 	   
-	   if background1.x <= -display.contentWidth*2 then
-		   background1.x = 0
-		   background2.x = display.contentWidth*2
-	   end
+	   		if background1.x <= -display.contentWidth*2 then
+		   		background1.x = 0
+		   		background2.x = display.contentWidth*2
+	   		end
 	   
-	   -- if any crates have been spawned scroll them too.
-	   if next(questionCrates) ~= nil then
-		   for _, item in ipairs(questionCrates) do
-			   item:translate( -1*dt, 0 )
-		   end
-	   end
-	end
+	   		-- if any crates have been spawned scroll them too
+	   		if next(questionCrates) ~= nil then
+		   		for _, item in ipairs(questionCrates) do
+			   		item:translate( -1*dt, 0 )
+		   		end
+	   		end
+	end	end
 	-- Frame update listener
 	Runtime:addEventListener( "enterFrame", frameUpdate )
 end
@@ -279,7 +352,7 @@ local overlayOptions ={
 	width = 80
 }
 
-function showQuestion()
+function showGameQuestion()
 	composer.showOverlay("questionOverlay", overlayOptions)
 	return true
 end
@@ -352,7 +425,6 @@ function scene:destroy( event )
 	helicopter:removeEventListener("collision", helicopter)
 	package.loaded[physics] = nil
 	physics = nil
-	
 	composer.removeScene( "gameScene" )
 end
 

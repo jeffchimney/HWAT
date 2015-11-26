@@ -52,10 +52,10 @@ function scene:create( event )
 	local background = display.newRect(sceneGroup, centerX, centerY, width, height, 12 )
 	background:setFillColor(1)
 		-- Called when the scene is still off screen and is about to move on screen
-	helicopter1[1] = "HotAirBalloon.png"
-	helicopter1[2] = 15
-	helicopter1[3] = "Hot Air Balloon"
-	helicopter1[4] = 1
+	_G.helicopter1[1] = "HotAirBalloon.png"
+	_G.helicopter1[2] = 15
+	_G.helicopter1[3] = "Hot Air Balloon"
+	_G.helicopter1[4] = 1
 
 	helicopter2[1] = "ToyHeli.png"
 	helicopter2[2] = 45

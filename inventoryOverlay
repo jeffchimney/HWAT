@@ -41,7 +41,7 @@ end
 
 function scene:create( event )
 	local sceneGroup = self.view
-	local Overlay = display.newRect(sceneGroup, centerX, centerY, width, height, 12 )
+	local Overlay = display.newRect(sceneGroup, centerX, centerY, width/2, height/2, 12 )
 	Overlay:setFillColor(0.9)
 	Overlay.alpha = 0.9
 	Overlay.isHitTestable = true

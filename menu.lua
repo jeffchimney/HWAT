@@ -10,6 +10,7 @@ local scene = composer.newScene()
 
 -- include Corona's "widget" library
 local widget = require "widget"
+local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
 --------------------------------------------
 
@@ -21,12 +22,12 @@ local options = {
 	    label="",
 	    font = "FuturaLT",
 	    fontSize = 20,
-	    labelColor = { default={0.27}, over={1} },
-		fillColor = { default={ 1, 1, 1, 1 }, over={0.27} },
-    	strokeColor = { default={0.27}, over={0.27} },
-    	strokeWidth = 3,
-    	shape = "roundedRect",
-		width=154, height=40
+	    labelColor = { default={0.24}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.24} },
+    	strokeColor = { default={0.24}, over={0.24} },
+    	strokeWidth = 2,
+    	shape = "Rect",
+		width=160, height=40
 }
 
 local overlayOptions ={
@@ -114,6 +115,19 @@ function scene:create( event )
 	titleLogo.x = display.contentWidth * 0.5
 	titleLogo.y = 100
 	titleLogo:setFillColor(0.26)
+
+	-- create a grey rectangle as the backdrop
+	local menuBG1 = display.newImageRect( "menuBG1.jpg", screenW*2, screenH )
+	menuBG1.anchorY = 0
+	menuBG1.x, menuBG1.y = 0, 0
+	menuBG1.alpha = 0.4
+	sceneGroup:insert(menuBG1)
+
+	local menuBG2 = display.newImageRect( "menuBG2.jpg", screenW*2, screenH )
+	menuBG2.anchorY = 0
+	menuBG2.x, menuBG2.y = screenW*2, 0
+	menuBG2.alpha = 0.4
+	sceneGroup:insert(menuBG2)
 	
 
 	-- Play Button Settings --
@@ -121,12 +135,12 @@ function scene:create( event )
 	    label="",
 	    font = "FuturaLT",
 	    fontSize = 20,
-	    labelColor = { default={0.27}, over={1} },
-		fillColor = { default={ 1, 1, 1, 1 }, over={0.27} },
-    	strokeColor = { default={0.27}, over={0.27} },
-    	strokeWidth = 3,
-    	shape = "roundedRect",
-		width=154, height=40,
+	    labelColor = { default={0.24}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.24} },
+    	strokeColor = { default={0.24}, over={0.24} },
+    	strokeWidth = 2,
+    	shape = "Rect",
+		width=160, height=40,
 		onRelease = onPlayBtnRelease
 	}
 	playBtn.x = display.contentWidth*0.5
@@ -168,6 +182,28 @@ function scene:create( event )
 	soundBtn.x = display.contentWidth * 0.95
 	soundBtn.y = display.contentHeight * 0.93
 
+	local runtime = 0
+	local function getDeltaTime()
+		local temp = system.getTimer()
+		local dt = (temp-runtime) / (1000/60)
+		runtime = temp
+		return dt
+	end
+
+	function scrollMenuScreen()
+		local dt = getDeltaTime()
+		menuBG1:translate(-0.25*dt, 0)
+		menuBG2:translate(-0.25*dt, 0)
+
+		if menuBG1.x <= -display.contentWidth*2 then
+			menuBG1.x = 0
+			menuBG2.x = display.contentWidth*2
+		end
+
+	end 
+
+	Runtime:addEventListener("enterFrame", scrollMenuScreen)
+
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( titleLogo )
@@ -182,6 +218,7 @@ function scene:show( event )
 	local phase = event.phase
 	
 	if phase == "will" then
+		
 		-- Called when the scene is still off screen and is about to move on screen
 	elseif phase == "did" then
 		-- Called when the scene is now on screen

@@ -92,21 +92,7 @@ function scene:create( event )
 	physicsTutorialPaused = false -- pause the physics when initially starting the game
 	questionCrates = {} -- initialize the question crate table
 	coins = {} -- initialize the coin table
-	local writeText = theseCoins.init({
-		filename = "coinFile.txt"
-	})
 
-
-
-	theseCoins.set(20)
-	theseCoins.save()
-
-	local itemText = testItems.init({
-		filename = "itemsFile.txt"
-	})
-
-	print(testItems.load())
-	userTutorialHeli = testItems.load -- store the heli the user has decided to choose into a variable which will be passed into rendering.
 
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
@@ -151,7 +137,7 @@ function scene:create( event )
 		helicopter = display.newImageRect(imageInput, 216, 113)
 		return helicopter
 	end
-	createMyTutorialHeli("Biplane.png")
+	createMyTutorialHeli("helicopter2.png")
 
 	--helicopter = display.newImageRect( "helicopter2.png", 216, 113 )
 	helicopter.name = "helicopter"
@@ -289,9 +275,6 @@ function scene:create( event )
 			elseif event.other.name == "coin" then -- check if helicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
 				coinShowing = false
-				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
-				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
-				theseCoins.save() -- save the text file
 				local currentCoin = event.other
 				currentCoin.alpha = 0
 				currentCoin:removeSelf() -- remove the coin from the screen

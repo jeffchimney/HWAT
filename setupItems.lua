@@ -2,6 +2,7 @@
 -- Use this file to keep track of the items that a user has
 -- Items will be saved and retrieved from a text file 
 _G.userHasThese = false
+_G.userCurrItems = {}
 local myItems = {} -- a table to hold the amount of items a user has
 myItems.item = "none" -- amount of items, set initially to 0
 
@@ -65,4 +66,17 @@ function myItems.checkForDoubles(itemId)
 	io.close(file)
 	return _G.UserHasThese
 end
+
+function myItems.itemsToTable()
+	local i = 1
+	local path = system.pathForFile(myItems.filename, system.DocumentsDirectory)
+	local file = io.open(path,"r")
+	for lines in file:lines() do
+		_G.userCurrItems[i] = tostring(lines)
+		print(_G.userCurrItems[i])
+		i = i + 1
+	end
+	return _G.userCurrItems
+end
+
 return myItems
