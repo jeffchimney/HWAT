@@ -139,6 +139,7 @@ function scene:create( event )
 				event.other = nil;
 				pauseMainGame()
 				showGameQuestion()
+				firstTouch = true
 				
 			elseif event.other.name == "coin" then -- check if tutorialHelicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
