@@ -211,6 +211,7 @@ function scene:create( event )
 	sceneGroup:insert( tutorialBtn )
 	sceneGroup:insert( creditBtn )
 	sceneGroup:insert( soundBtn )
+
 end
 
 function scene:show( event )

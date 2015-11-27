@@ -43,7 +43,7 @@ local function onGetObjects( event )
 		-- pretty much do nothing 
 	else -- if your device ID is not in the system yet
 		-- add device id to a row in the User table
-		local dataTable = { ["deviceId"] = system.getInfo("deviceID"), ["completedTutorial"] = false }
+		local dataTable = { ["deviceId"] = system.getInfo("deviceID"), ["completedTutorial"] = false, ["highScore"] = 0 }
 		parse:createObject( "User", dataTable, onCreateObject )
 	end 
 	
