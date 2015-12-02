@@ -19,7 +19,7 @@ local in1, in2, in3 = nil, nil, nil
 
 local overlayOptions ={
 	isModal = false,
-	effect = "fade",
+	--effect = "fade",
 	time = 1000,
 	height = 80,
 	width = 80

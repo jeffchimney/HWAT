@@ -37,14 +37,36 @@ local firstTouch = true
 
 local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
-
+local coinTable = {} -- use a table to store instances of the coins
 local overlayOptions ={
 	isModal = false,
 	effect = "fade",
 	time = 1000,
 	height = 80,
 	width = 80
-}
+	}
+
+	local spriteSheetOptions = {
+		width = 100,
+		height = 100,
+		numFrames = 10
+	}
+		
+	coinShowing = false
+		-- create a sprite sheet animation for a coin spinning
+	local coin_sheet = graphics.newImageSheet("coin.png", spriteSheetOptions)
+		-- create the sequence of animations from the coin sheet
+	local coin_sequences = {
+			name = "spin",
+			start = 1,
+			count = 10,
+			time = 800,
+			loopCount = 0,
+			loopDirection = "forward"
+	}
+	
+	-- function that will spawn the coin based on a number input that will index the table
+	
 
 function scene:create( event )
 	-- Called when the scene's view does not exist.
@@ -52,13 +74,11 @@ function scene:create( event )
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 	local sceneGroup = self.view
-
 	local writeText = theseCoins.init({
 		filename = "coinFile.txt"
 	})
 
 	theseCoins.save()
-
 	local itemText = testItems.init({
 		filename = "itemsFile.txt"
 	})
@@ -70,7 +90,22 @@ function scene:create( event )
 	questionCrates = {}
 	score = 0
 
-	
+	function spawnTheseCoins()
+		local thisCoin = display.newSprite(coin_sheet, coin_sequences)
+		thisCoin.y = display.contentHeight * 0.6
+		thisCoin.x = display.contentWidth
+		thisCoin.xScale = 0.30
+		thisCoin.yScale = 0.30
+		thisCoin.name = "coin"
+		thisCoin:play()
+
+		-- add physics to the coin
+		physics.addBody( thisCoin, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
+		thisCoin.gravityScale = 0
+		table.insert(coinTable, thisCoin)
+		sceneGroup:insert(thisCoin)
+	end
+
 	-- create a grey rectangle as the backdrop
 	local background1 = display.newImageRect( "bg3.png", screenW*2, screenH )
 	background1.anchorY = 0
@@ -146,13 +181,15 @@ function scene:create( event )
 				coinShowing = false
 				local currentCoin = event.other
 				currentCoin.alpha = 0
-				currentCoin:removeSelf() -- remove the coin from the screen
+				currentCoin.name = 'collectedCoin' -- remove the coin from the screen
 				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
 				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
 				theseCoins.save() -- save the text file
 				_G.gameCoins = _G.gameCoins + 1
 				amountOfCoins.text = tostring(_G.gameCoins) -- update the amount of coins and display onscreen
 				--print("im not a crate!! mwah ah ha ha!!")
+			elseif event.other.name == "collectedCoin" then
+				event.other:toBack()
 			elseif event.other.name == nil then
 				print("Collided with something with no assigned name")
 			else
@@ -227,7 +264,7 @@ function scene:create( event )
 
 		-- add physics to the helicopter
 
-		physics.addBody( newCrate, {radius = 25, density=1.0, friction=0.3, bounce=0.3 } )
+		physics.addBody( newCrate, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
 		newCrate.gravityScale = 0
 	
 		table.insert( questionCrates, newCrate )
@@ -250,7 +287,7 @@ function scene:create( event )
 	helicopter:addEventListener("collision", helicopter)
 
 	-- add physics to the helicopter
-	physics.addBody( helicopter, {radius = 40, density=1.0, friction=0.3, bounce=0.3 } )
+	physics.addBody( helicopter, {radius = 15, density=1.0, friction=0.3, bounce=0.3 } )
 	
 	-- move the helicopter while press and hold
 	local function flyHelicopter()
@@ -327,6 +364,8 @@ function scene:create( event )
 	sceneGroup:insert(scoreLabel)
 	sceneGroup:insert(amountOfCoins)
 	sceneGroup:insert(itemBtn)
+	spawnTheseCoins()
+
 
 	
 	--  start scrolling background, will rearrange backgrounds once one is off screen
@@ -377,6 +416,11 @@ function scene:create( event )
 		   		for _, item in ipairs(questionCrates) do
 			   		item:translate( -1*dt, 0 )
 		   		end
+	   		end
+	   		if next(coinTable) ~= nil then
+	   			for _, coin in ipairs(coinTable) do
+	   				coin:translate(-1*dt, 0)
+	   			end
 	   		end
 	end	end
 	-- Frame update listener
