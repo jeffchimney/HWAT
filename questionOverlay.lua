@@ -19,6 +19,19 @@ local overlayOptions ={
 	width = 80
 }
 
+
+local options = {
+	    label="",
+	    font = "FuturaLT",
+	    fontSize = 17,
+	    labelColor = { default={0.24}, over={1} },
+		fillColor = { default={ 1, 1, 1, 1 }, over={0.24} },
+    	strokeColor = { default={0.24}, over={0.24} },
+    	strokeWidth = 2,
+    	shape = "Rect",
+		width=40, height=40
+}
+
 local function btnTap(event)
 	event.target.xScale = 0.95
 	event.target.yScale = 0.95
@@ -48,30 +61,71 @@ function scene:create( event )
 	Overlay:addEventListener("tap", catchBackgroundOverlay)
 	Overlay:addEventListener("touch", catchBackgroundOverlay)
 
+
+	-- We can use this function to randomize an input parameter which will give back a corresponding textfile
+	local function readQuestionFile(inputMCNum)
+		local path = system.pathForFile("Question"..inputMCNum..".txt", system.DocumentsDirectory)
+		print(path)
+    	local file = io.open(path, "r")
+    	if not file then 
+    		print("File Not Found") 
+    	else
+    		local content = file:read "*a"
+    		local question = display.newText(content, 264, 42, "FuturaLT", 15 )
+    		question.x = display.contentWidth * 0.5
+			question.y = 120
+			question:setFillColor(0.27)
+			sceneGroup:insert(question)
+    	end	
+    	return content
+	end
+
+	local function readAnswerFile(inputAnswerNum)
+		local buttonTable = {}
+		local i = 1
+		local path = system.pathForFile("Answer"..inputAnswerNum..".txt", system.DocumentsDirectory)
+		print(path)
+    	local file = io.open(path, "r")
+    		for line in file:lines() do
+				buttonTable[i] = widget.newButton(options)
+				buttonTable[i]:setLabel(tostring(line))
+				buttonTable[i].x = width*0.05 + i*80
+				buttonTable[i].y = height * 0.8
+				sceneGroup:insert(buttonTable[i])
+				buttonTable[i]:addEventListener("tap", hideOverlay) -- will change this later to make user pick correct answer to hide overlay
+				i = i + 1
+			end
+    	return content
+	end
+
+
+	-- use this function to spawn a random question
+	local function spawnRandomQ()
+		local num = math.random( 1, 10 )
+		readQuestionFile(num)
+		readAnswerFile(num)
+	end
+
+	-- Calling these for now until we get more questions
+	readQuestionFile(1)
+	readAnswerFile(1)
 	-- Create the button used to minimize the overlay on click
-	local minimizeBtn = widget.newButton {
-			label = "hide",
-			labelColor = { default={0.27}, over={1} },
-			font = "FuturaLT",
-			color = black,
-			height = 30,
-			width = 30,
-	}
-	minimizeBtn.x = width * 0.08
-	minimizeBtn.y = height * 0.08
-	minimizeBtn:addEventListener ("tap", hideOverlay)
-	sceneGroup:insert(minimizeBtn)
+	--local minimizeBtn = widget.newButton {
+			--label = "hide",
+			--labelColor = { default={0.27}, over={1} },
+			--font = "FuturaLT",
+			--color = black,
+			--height = 30,
+			--width = 30,
+	--}
+	--minimizeBtn.x = width * 0.08
+	--minimizeBtn.y = height * 0.08
+	--minimizeBtn:addEventListener ("tap", hideOverlay)
+	--sceneGroup:insert(minimizeBtn)
 	-- Called when the scene's view does not exist.
 	-- 
 	-- INSERT code here to initialize the scene
-	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
-
-	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newText( "THIS IS WHERE WE WOULD ASK A QUESTION", 264, 42, "FuturaLT", 20 )
-	titleLogo.x = display.contentWidth * 0.5
-	titleLogo.y = 145
-	titleLogo:setFillColor(0.27)
-	sceneGroup:insert(titleLogo)
+	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.	
 	
 end
 

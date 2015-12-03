@@ -170,7 +170,8 @@ function scene:create( event )
 			if event.other.name == "crate" then
 				--event.other:removeSelf()
 				currCrate = event.other
-				currCrate.alpha = 0
+				currCrate.yScale = 0
+				currCrate.xScale = 0
 				event.other = nil;
 				pauseMainGame()
 				showGameQuestion()
@@ -181,7 +182,8 @@ function scene:create( event )
 				coinShowing = false
 				local currentCoin = event.other
 				currentCoin.alpha = 0
-				currentCoin.name = 'collectedCoin' -- remove the coin from the screen
+				currentCoin:toBack()
+				--currentCoin.name = 'collectedCoin' -- remove the coin from the screen
 				local currentCoinAmount = theseCoins.load() -- load the users current amount of coins from the text file
 				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
 				theseCoins.save() -- save the text file
@@ -271,7 +273,6 @@ function scene:create( event )
 		
 		sceneGroup:insert(newCrate)
 	end
-	spawnQuestionCrate()
 
 	scrollingForeground1.type = "gameOver"
 	-- make a helicopter (off-screen), position it, and rotate slightly
@@ -365,6 +366,7 @@ function scene:create( event )
 	sceneGroup:insert(amountOfCoins)
 	sceneGroup:insert(itemBtn)
 	spawnTheseCoins()
+	timer.performWithDelay(10000, spawnTheseCoins())
 
 
 	
@@ -460,11 +462,13 @@ function scene:show( event )
 	end
 	
 	if phase == "will" then
+		print("My Crates")
+		print(tostring(questionCrates[1]))
 		helicopter.y = display.contentHeight/2
 		scoreLabel.alpha = 0
 		setupKripp()
-		spawnQuestionCrate()
 		Runtime:addEventListener( "enterFrame", handleKrippMovement )
+		spawnQuestionCrate()
 		
 		-- Called when the scene is still off screen and is about to move on screen
 	elseif phase == "did" then
