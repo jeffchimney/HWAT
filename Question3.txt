@@ -1,0 +1,8 @@
+Fix the following line of code:
+	
+if (number >= 70 && <= 90){}
+
+a. if (number >= 70){} if (number <= 90){}
+b. if (>= 70 && number <= 90){}
+c. if (number >= 70 & <= 90){}
+d. if (number >= 70 && number <=90){}

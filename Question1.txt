@@ -1,0 +1,9 @@
+Which of the following is the correct Boolean
+expression to test for: int x being a value
+between, but not including, 500 and 650, or
+int y not equal to 1000?
+
+a. ((x >= 500 && x <= 650) && (y != 1000))
+b. ((x > 500 && x < 650) || !(y.equal(1000)))
+c. ((x > 500 && x < 650) || (y != 1000))
+d. ((x < 500 && x > 650) || !(y == 1000))

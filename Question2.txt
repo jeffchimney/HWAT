@@ -1,0 +1,9 @@
+Evaluate (to true or false) each of 
+the following expressions: 
+
+14 <= 14, 14 < 14, -9 < -25, -25 > -9
+
+a. False, False, True, True
+b. True, False, True, False
+c. True, False, True, True
+d. False, True, True, False

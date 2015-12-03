@@ -64,7 +64,7 @@ function scene:create( event )
 
 	-- We can use this function to randomize an input parameter which will give back a corresponding textfile
 	local function readQuestionFile(inputMCNum)
-		local path = system.pathForFile("Question"..inputMCNum..".txt", system.DocumentsDirectory)
+		local path = system.pathForFile("Question"..inputMCNum..".txt", system.ResourceDirectory)
 		print(path)
     	local file = io.open(path, "r")
     	if not file then 
@@ -83,7 +83,7 @@ function scene:create( event )
 	local function readAnswerFile(inputAnswerNum)
 		local buttonTable = {}
 		local i = 1
-		local path = system.pathForFile("Answer"..inputAnswerNum..".txt", system.DocumentsDirectory)
+		local path = system.pathForFile("Answer"..inputAnswerNum..".txt", system.ResourceDirectory)
 		print(path)
     	local file = io.open(path, "r")
     		for line in file:lines() do
@@ -101,13 +101,12 @@ function scene:create( event )
 
 	-- use this function to spawn a random question
 	local function spawnRandomQ()
-		local num = math.random( 1, 10 )
+		local num = math.random( 1, 3 )
 		readQuestionFile(num)
-		readAnswerFile(num)
 	end
 
 	-- Calling these for now until we get more questions
-	readQuestionFile(1)
+	spawnRandomQ()
 	readAnswerFile(1)
 	-- Create the button used to minimize the overlay on click
 	--local minimizeBtn = widget.newButton {
