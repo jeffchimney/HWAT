@@ -69,13 +69,49 @@ function scene:create( event )
 	-- 
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
-
+	
 	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newText( "SHOW SCORE, AMOUNT OF COINS, STATS ETC. HERE", 264, 42, "FuturaLT", 15 )
+	-- title will show amount of coins user has, current score, high score
+	local titleLogo = display.newText( "", 264, 42, "FuturaLT", 15 )
 	titleLogo.x = display.contentWidth * 0.5
-	titleLogo.y = 145
+	titleLogo.y = display.contentHeight * 0.4
 	titleLogo:setFillColor(0.27)
+	
+	local currentScoreLabel = display.newText( "Score this Run: ", 264, 42, "FuturaLT", 15 )
+	currentScoreLabel.x = display.contentWidth * 0.5
+	currentScoreLabel.y = display.contentHeight * 0.5
+	currentScoreLabel:setFillColor(0.27)
+	
+	local numberOfCoinsLabel = display.newText( "Number of Coins: ", 264, 42, "FuturaLT", 15 )
+	numberOfCoinsLabel.x = display.contentWidth * 0.5
+	numberOfCoinsLabel.y = display.contentHeight * 0.6
+	numberOfCoinsLabel:setFillColor(0.27)
+	
+-------- End Stats For This Run Labels ------------------
+	
+	-- load user's high score
+	-- called when an parse is queried for an object
+	local function onGetObjects( event )
+		-- if there are no errors and your deviceID is already in the system
+		if not event.error then
+			-- update User.highScore if they have broken their previous record.
+			titleLogo.text = "High Score: " .. tostring(event.response.results[1].highScore)
+		end 
+
+	end
+
+	-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+	local queryTable = { 
+	  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+	}
+
 	sceneGroup:insert(titleLogo)
+	sceneGroup:insert(numberOfCoinsLabel)
+	sceneGroup:insert(titleLogo)
+	sceneGroup:insert(currentScoreLabel)
+	sceneGroup:insert(numberOfCoinsLabel)
+	-- show user's high score
+	parse:getObjects( "User", queryTable, onGetObjects )
 	
 end
 

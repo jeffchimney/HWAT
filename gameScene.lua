@@ -34,6 +34,7 @@ local thisCrate -- store the crate that has already been collided with
 _G.gameHasStarted = false
 _G.gamePaused = false
 local firstTouch = true
+local crateInScene = false
 
 local scrollingForeground1 = display.newImageRect( "ground.png", screenW+5, 82 )
 local scrollingForeground2 = display.newImageRect( "ground.png", screenW+5, 82 )
@@ -90,20 +91,24 @@ function scene:create( event )
 	questionCrates = {}
 	score = 0
 
+	local coinInScene = false
 	function spawnTheseCoins()
-		local thisCoin = display.newSprite(coin_sheet, coin_sequences)
-		thisCoin.y = display.contentHeight * 0.6
-		thisCoin.x = display.contentWidth
-		thisCoin.xScale = 0.30
-		thisCoin.yScale = 0.30
-		thisCoin.name = "coin"
-		thisCoin:play()
+		if coinInScene == false then
+			coinInScene = true
+			local thisCoin = display.newSprite(coin_sheet, coin_sequences)
+			thisCoin.y = display.contentHeight * 0.6
+			thisCoin.x = display.contentWidth
+			thisCoin.xScale = 0.30
+			thisCoin.yScale = 0.30
+			thisCoin.name = "coin"
+			thisCoin:play()
 
-		-- add physics to the coin
-		physics.addBody( thisCoin, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
-		thisCoin.gravityScale = 0
-		table.insert(coinTable, thisCoin)
-		sceneGroup:insert(thisCoin)
+			-- add physics to the coin
+			physics.addBody( thisCoin, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
+			thisCoin.gravityScale = 0
+			table.insert(coinTable, thisCoin)
+			sceneGroup:insert(thisCoin)
+		end
 	end
 
 	-- create a grey rectangle as the backdrop
@@ -176,6 +181,7 @@ function scene:create( event )
 				pauseMainGame()
 				showGameQuestion()
 				firstTouch = true
+				crateInScene = false
 				
 			elseif event.other.name == "coin" then -- check if tutorialHelicopter is colliding with a coin
 				media.playSound("coinCollide.wav") -- play a coin sound on collision
@@ -190,6 +196,7 @@ function scene:create( event )
 				_G.gameCoins = _G.gameCoins + 1
 				amountOfCoins.text = tostring(_G.gameCoins) -- update the amount of coins and display onscreen
 				--print("im not a crate!! mwah ah ha ha!!")
+				coinInScene = false
 			elseif event.other.name == "collectedCoin" then
 				event.other:toBack()
 			elseif event.other.name == nil then
@@ -248,17 +255,20 @@ function scene:create( event )
 		sceneGroup:insert(drKripp)
 	end
 	
+	local crateInScene = false
 	function spawnQuestionCrate()
-		print("Spawn question crate called.")
+		if crateInScene == false then
+			crateInScene = true
+			print("Spawn question crate called.")
 
-		local newCrate = display.newImageRect( "crate.png", 20, 20 )
-		newCrate.name = "crate"
+			local newCrate = display.newImageRect( "crate.png", 20, 20 )
+			newCrate.name = "crate"
 	
-		if drKripp.y >= screenH/2 then
-			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y - screenH/3
-		else
-			newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y + screenH/3
-		end
+			if drKripp.y >= screenH/2 then
+				newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y - screenH/3
+			else
+				newCrate.x, newCrate.y = screenW + screenW/5, drKripp.y + screenH/3
+			end
 	
 		-- set up crate collision listeners to pass into helicopterCollision(self,event)
 		--gameCrate.collision = helicopterCollision
@@ -266,12 +276,13 @@ function scene:create( event )
 
 		-- add physics to the helicopter
 
-		physics.addBody( newCrate, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
-		newCrate.gravityScale = 0
+			physics.addBody( newCrate, {radius = 5, density=1.0, friction=0.3, bounce=0.3 } )
+			newCrate.gravityScale = 0
 	
-		table.insert( questionCrates, newCrate )
+			table.insert( questionCrates, newCrate )
 		
-		sceneGroup:insert(newCrate)
+			sceneGroup:insert(newCrate)
+		end
 	end
 
 	scrollingForeground1.type = "gameOver"
