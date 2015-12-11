@@ -96,6 +96,8 @@ function scene:create( event )
 		if not event.error then
 			-- update User.highScore if they have broken their previous record.
 			titleLogo.text = "High Score: " .. tostring(event.response.results[1].highScore)
+			currentScoreLabel.text = "Score: " .. tostring(event.response.results[1].scoreThisGame)
+			numberOfCoinsLabel.text = "Coins: " .. tostring(event.response.results[1].Coins)
 		end 
 
 	end

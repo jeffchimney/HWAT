@@ -124,10 +124,29 @@ function scene:create( event )
 	background2.name = "background"
 	sceneGroup:insert(background2)
 	
+	-- called when an parse is queried for an object
+	local function onGetObjects( event )
+		-- if there are no errors and your deviceID is already in the system
+		if not event.error then
+			-- update User.highScore if they have broken their previous record.
+			amountOfCoins.text = tostring(event.response.results[1].Coins)
+		end 
+
+	end
+
+	-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+	local queryTable = { 
+	  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+	}
+	
 	amountOfCoins = display.newText(tostring(_G.gameCoins), 264, 42, "FuturaLT", 20)
 	amountOfCoins.y = display.contentHeight * 0.1
 	amountOfCoins.x = display.contentWidth * 0.1
 	amountOfCoins:setFillColor(0.26)
+	
+	if tonumber( amountOfCoins.text ) == 0 then
+		parse:getObjects( "User", queryTable, onGetObjects )
+	end
 	
 	scoreLabel = display.newText(score, 264, 42, "FuturaLT", 20)
 	scoreLabel.y = display.contentHeight * 0.1
@@ -194,7 +213,36 @@ function scene:create( event )
 				theseCoins.add(currentCoinAmount + 1) -- add current coints + 1 to the text file
 				theseCoins.save() -- save the text file
 				_G.gameCoins = _G.gameCoins + 1
-				amountOfCoins.text = tostring(_G.gameCoins) -- update the amount of coins and display onscreen
+				amountOfCoins.text = tostring(tonumber(amountOfCoins.text)+1) -- update the amount of coins and display onscreen
+				
+				-- update number of coins in parse
+				local function onGetObjects( event )
+					-- if there are no errors and your deviceID is already in the system
+					if not event.error then
+						-- update User.highScore if they have broken their previous record.
+	
+						local updateDataTable = { ["Coins"] = tonumber( amountOfCoins.text ) }
+						parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
+					end 
+		
+				end
+	
+				-- called when a parse object is updated
+				local function onUpdateObject( event )
+					if not event.error then
+				    	print( event.response.createdAt )
+				 	end
+				end
+				-- SELECT deviceId FROM User WHERE deviceId = system.getInfo("deviceID");
+				local queryTable = { 
+				  ["where"] = { ["deviceId"] = system.getInfo("deviceID") }
+				}
+				parse:getObjects( "User", queryTable, onGetObjects )
+				
+				
+				
+				
+				
 				--print("im not a crate!! mwah ah ha ha!!")
 				coinInScene = false
 			elseif event.other.name == "collectedCoin" then
@@ -210,11 +258,15 @@ function scene:create( event )
 					if not event.error then
 						-- update User.highScore if they have broken their previous record.
 						if event.response.results[1].highScore < tonumber( scoreLabel.text ) then
-							local updateDataTable = { ["highScore"] = tonumber( scoreLabel.text ) }
+							local updateDataTable = { ["highScore"] = tonumber( scoreLabel.text ), ["scoreThisGame"] = tonumber( scoreLabel )}
 							parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
 						end
-					end 
-		
+						if tonumber( scoreLabel.text ) >= 4 then
+							local updateDataTable = { ["scoreThisGame"] = tonumber( scoreLabel.text )}
+							parse:updateObject( "User", event.response.results[1].objectId, updateDataTable, onUpdateObject )
+							print(event.response.results[1].scoreThisGame)
+						end
+					end
 				end
 	
 				-- called when a parse object is updated
@@ -233,11 +285,6 @@ function scene:create( event )
 				score = 0
 				composer.gotoScene("gameOver")
 			end
-			--Change functions of this later once we have added in score variables and such:
-			--Include game over message/scoreboard
-			--Stop incrementing score
-			--define types of different collision, ex: with coins, questions
-			--Change appearance of helicopter maybe on !!FIRE!! or spinning out of control or dropping off screen
 		end
 	end
 
@@ -489,6 +536,11 @@ function scene:show( event )
 		-- INSERT code here to make the scene come alive
 		-- e.g. start timers, begin animation, play audio, etc.
 		--physics.start()
+		
+		--if crateInFrame == false then
+			--spawn another crate
+		--	spawnQuestionCrate()
+		--end
 	end
 end
 
